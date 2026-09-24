@@ -7,6 +7,9 @@
       "enabled": true,
       "default_tools_approval_mode": "approve",
       "tools": {
+        "neo_nexus_connect_project": {
+          "approval_mode": "prompt"
+        },
         "neo_nexus_update_client_request": {
           "approval_mode": "prompt"
         }

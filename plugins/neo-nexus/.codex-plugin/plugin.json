@@ -1,7 +1,7 @@
 {
   "name": "neo-nexus",
-  "version": "0.1.0+codex.20260924144255",
-  "description": "Publish privacy-safe Codex work updates from registered projects and other engineering chats to Neo-Nexus.",
+  "version": "0.1.0+codex.20260924153407",
+  "description": "Connect repositories to approved projects and publish privacy-safe Codex work updates to Neo-Nexus.",
   "author": {
     "name": "Neodym",
     "url": "https://employee-tracker-cloud.vercel.app"
@@ -17,7 +17,7 @@
   "interface": {
     "displayName": "Neo-Nexus",
     "shortDescription": "Report project and other Codex work to Neo-Nexus.",
-    "longDescription": "Gives engineers permission-checked identity, project context, client tasks and issues, and privacy-safe work reporting inside Codex. Linked work appears under its project; meaningful work from unregistered repositories and projectless chats appears under Other work. Neo-Nexus never receives prompts, source files, diffs, secrets, terminal history, commands, or local paths.",
+    "longDescription": "Gives engineers permission-checked identity, explicit repository-to-project connection, project context, client tasks and issues, and privacy-safe work reporting inside Codex. Linked work appears under its project; meaningful work from unregistered repositories and projectless chats appears under Other work. Neo-Nexus never receives prompts, source files, diffs, secrets, terminal history, commands, or local paths.",
     "developerName": "Neodym",
     "category": "Productivity",
     "capabilities": [
@@ -28,6 +28,8 @@
     "brandColor": "#7566FF",
     "defaultPrompt": [
       "Who am I connected as in Neo-Nexus?",
+      "List the Neo-Nexus projects I can connect this repository to.",
+      "Connect this repository to a Neo-Nexus project.",
       "Show the Neo-Nexus context for this project.",
       "What client requests should I work on?",
       "Record the meaningful work I completed for this project.",

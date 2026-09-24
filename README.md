@@ -5,6 +5,7 @@ Private Neodym marketplace for the Neo-Nexus engineering plugin.
 The plugin lets an approved engineer use Codex to:
 
 - read the Neo-Nexus project connected to the current Git checkout;
+- list approved projects and explicitly connect the current repository to one of them;
 - see project progress, tracking health, and open client tasks or issue flags;
 - move a client request between open, in progress, and resolved with explicit approval.
 - verify which approved engineer and device the plugin is using.
@@ -30,11 +31,13 @@ Add the marketplace once:
 codex plugin marketplace add neodym29/neo-nexus-codex-plugin
 ```
 
-Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. Linked repositories are grouped under their projects; all other meaningful engineering chats are summarized under **Other work**.
+Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. An exact configured Git-remote match connects automatically; otherwise ask the plugin to list projects and connect the repository to the exact project you choose. Connected repositories are grouped under their projects; all other meaningful engineering chats are summarized under **Other work**.
 
 Useful prompts:
 
 - `Show the Neo-Nexus context for this project.`
+- `List the Neo-Nexus projects I can connect this repository to.`
+- `Connect this repository to project 51.`
 - `What client requests should I work on?`
 - `Record the meaningful work I completed for this project.`
 - `Check Neo-Nexus tracking health for this repo.`
@@ -52,4 +55,4 @@ Restart Codex and start a new chat after installing an update.
 
 ## Access model
 
-The server independently verifies the current device, company, approved engineer account, active project membership, and approved repository binding. Each request-status change is audited to that engineer and device. Installing the plugin alone never grants project access.
+The server independently verifies the current device, company, approved engineer account, active project membership, and exact repository remote. Creating a plugin project connection requires an explicit tool approval unless the project already has one unique exact remote match. Connections and request-status changes are audited to that engineer and device. Installing the plugin alone never grants project access.
