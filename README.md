@@ -8,7 +8,8 @@ The plugin lets an approved engineer use Codex to:
 - see project progress, tracking health, and open client tasks or issue flags;
 - move a client request between open, in progress, and resolved with explicit approval.
 - verify which approved engineer and device the plugin is using.
-- post plain-language work milestones to the employee dashboard as meaningful Codex work is completed.
+- post plain-language work milestones to the project dashboard as meaningful Codex work is completed;
+- file work from unregistered repositories and projectless chats under **Other work**.
 
 It reuses the device identity created by the Neo-Nexus setup. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, secrets, terminal history, commands, or local paths.
 
@@ -19,7 +20,6 @@ Requirements:
 - Codex and Git are installed;
 - Node.js 18 or newer is available;
 - this computer is connected from **Set up Neo-Nexus CLI**;
-- the current checkout is linked to a Neo-Nexus project and Trace is started;
 - the GitHub account can read this private repository.
 
 Add the marketplace once:
@@ -28,7 +28,7 @@ Add the marketplace once:
 codex plugin marketplace add neodym29/neo-nexus-codex-plugin
 ```
 
-Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat in the project repository after installation.
+Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. Linked repositories are grouped under their projects; all other meaningful engineering chats are summarized under **Other work**.
 
 Useful prompts:
 

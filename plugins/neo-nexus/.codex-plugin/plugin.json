@@ -1,7 +1,7 @@
 {
   "name": "neo-nexus",
-  "version": "0.1.0+codex.20260924065501",
-  "description": "Publish privacy-safe Codex work updates to Neo-Nexus projects, client requests, and employee daily summaries.",
+  "version": "0.1.0+codex.20260924072615",
+  "description": "Publish privacy-safe Codex work updates from registered projects and other engineering chats to Neo-Nexus.",
   "author": {
     "name": "Neodym",
     "url": "https://employee-tracker-cloud.vercel.app"
@@ -16,8 +16,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Neo-Nexus",
-    "shortDescription": "Work on Neo-Nexus client requests from Codex.",
-    "longDescription": "Gives engineers permission-checked identity, project context, client tasks and issues, and privacy-safe work reporting inside Codex. Codex posts plain-language milestones to the employee dashboard and Neo-Nexus rolls those plugin updates into daily project summaries. Updates are attributed to the authenticated engineer and approved device. It never sends prompts, source files, diffs, secrets, terminal history, commands, or local paths.",
+    "shortDescription": "Report project and other Codex work to Neo-Nexus.",
+    "longDescription": "Gives engineers permission-checked identity, project context, client tasks and issues, and privacy-safe work reporting inside Codex. Linked work appears under its project; meaningful work from unregistered repositories and projectless chats appears under Other work. Neo-Nexus never receives prompts, source files, diffs, secrets, terminal history, commands, or local paths.",
     "developerName": "Neodym",
     "category": "Productivity",
     "capabilities": [
@@ -31,6 +31,7 @@
       "Show the Neo-Nexus context for this project.",
       "What client requests should I work on?",
       "Record the meaningful work I completed for this project.",
+      "Record this unlinked task under Other work.",
       "Check Neo-Nexus tracking health for this repo."
     ]
   },

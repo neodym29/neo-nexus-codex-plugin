@@ -6,7 +6,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import {execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.2.0'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.3.0'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -40,12 +40,12 @@ const TOOLS = [
   },
   {
     name: 'neo_nexus_record_work',
-    description: 'Post one plain-language Codex work milestone to the linked Neo-Nexus project. Use after meaningful progress, verified completion, or a real blocker. Never include prompts, source code, diffs, secrets, terminal history, commands, or local file paths.',
+    description: 'Post one plain-language Codex work milestone. A linked repository is filed under its Neo-Nexus project; work from an unlinked chat is filed under Other work. Use after meaningful progress, verified completion, or a real blocker. Never include prompts, source code, diffs, secrets, terminal history, commands, or local file paths.',
     inputSchema: {
       type: 'object',
       required: ['status', 'summary'],
       properties: {
-        repository_path: {type: 'string', description: 'Absolute path inside the linked project repository. Defaults to the MCP process working directory.'},
+        repository_path: {type: 'string', description: 'Absolute path for the work when available. Linked repositories are matched to their project; other folders are reported as Other work.'},
         status: {type: 'string', enum: ['in_progress', 'completed', 'blocked']},
         summary: {type: 'string', minLength: 8, maxLength: 600, description: 'A concise non-technical description of the work outcome.'},
         next_step: {type: 'string', maxLength: 500, description: 'The next concrete step, if one remains.'},
@@ -210,6 +210,11 @@ async function context(argumentsValue = {}) {
   return {config, data};
 }
 
+function isUnlinkedWorkError(error) {
+  const message = error instanceof Error ? error.message : '';
+  return /not inside a readable Git repository|no origin remote and no local Neo-Nexus project binding|not actively linked for this engineer and device/i.test(message);
+}
+
 async function callTool(name, args) {
   if (name === 'neo_nexus_whoami') {
     const config = readDeviceConfig();
@@ -231,7 +236,21 @@ async function callTool(name, args) {
   }
   if (name === 'neo_nexus_record_work') {
     if (!args || !['in_progress', 'completed', 'blocked'].includes(String(args.status || '')) || typeof args.summary !== 'string') throw new Error('A work status and plain-language summary are required.');
-    const {config, data: projectData} = await context(args);
+    let linked;
+    try { linked = await context(args); }
+    catch (error) {
+      if (!isUnlinkedWorkError(error)) throw error;
+      const config = readDeviceConfig();
+      const data = await callNeoNexus(config, 'codex-other-work-update', {
+        status: String(args.status),
+        summary: String(args.summary),
+        ...(typeof args.next_step === 'string' && args.next_step.trim() ? {nextStep: args.next_step.trim()} : {}),
+        idempotencyKey: crypto.randomUUID(),
+        pluginVersion: SERVER_INFO.version,
+      });
+      return result(`Neo-Nexus recorded this ${String(args.status).replace('_', ' ')} update under Other work.`, {ok: true, ...data});
+    }
+    const {config, data: projectData} = linked;
     const workspaceId = Number(projectData.project?.id);
     if (!Number.isSafeInteger(workspaceId) || workspaceId < 1) throw new Error('Neo-Nexus did not return a valid project identity.');
     const data = await callNeoNexus(config, 'codex-work-update', {
