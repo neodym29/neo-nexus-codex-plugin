@@ -8,8 +8,9 @@ The plugin lets an approved engineer use Codex to:
 - see project progress, tracking health, and open client tasks or issue flags;
 - move a client request between open, in progress, and resolved with explicit approval.
 - verify which approved engineer and device the plugin is using.
+- post plain-language work milestones to the employee dashboard as meaningful Codex work is completed.
 
-It reuses the device identity created by the Neo-Nexus Trace CLI. It does not upload repository source, diffs, prompts, terminal history, or local paths.
+It reuses the device identity created by the Neo-Nexus setup. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, secrets, terminal history, commands, or local paths.
 
 ## Install
 
@@ -33,6 +34,7 @@ Useful prompts:
 
 - `Show the Neo-Nexus context for this project.`
 - `What client requests should I work on?`
+- `Record the meaningful work I completed for this project.`
 - `Check Neo-Nexus tracking health for this repo.`
 
 ## Update
