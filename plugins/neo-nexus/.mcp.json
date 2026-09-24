@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "neo_nexus": {
+      "command": "node",
+      "args": ["./scripts/mcp-server.mjs"],
+      "cwd": ".",
+      "enabled": true,
+      "default_tools_approval_mode": "approve",
+      "tools": {
+        "neo_nexus_update_client_request": {
+          "approval_mode": "prompt"
+        }
+      },
+      "env_vars": ["HOME", "USERPROFILE", "EMPLOYEE_TRACE_HOME", "PATH"],
+      "startup_timeout_sec": 10,
+      "tool_timeout_sec": 30
+    }
+  }
+}

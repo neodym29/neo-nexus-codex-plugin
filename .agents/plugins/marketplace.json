@@ -1,0 +1,20 @@
+{
+  "name": "neodym",
+  "interface": {
+    "displayName": "Neodym Engineering"
+  },
+  "plugins": [
+    {
+      "name": "neo-nexus",
+      "source": {
+        "source": "local",
+        "path": "./plugins/neo-nexus"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

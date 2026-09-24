@@ -1,0 +1,28 @@
+{
+  "name": "neo-nexus",
+  "version": "0.1.0",
+  "description": "Connect Codex engineering work with Neo-Nexus projects and client requests.",
+  "author": {
+    "name": "Neodym",
+    "url": "https://employee-tracker-cloud.vercel.app"
+  },
+  "homepage": "https://employee-tracker-cloud.vercel.app",
+  "keywords": ["projects", "engineering", "client-requests", "git"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Neo-Nexus",
+    "shortDescription": "Work on Neo-Nexus client requests from Codex.",
+    "longDescription": "Gives engineers permission-checked project context, client tasks and issues, and Neo-Nexus tracking health inside Codex. It reuses the authenticated local Neo-Nexus CLI and never sends prompts or source files.",
+    "developerName": "Neodym",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://employee-tracker-cloud.vercel.app",
+    "brandColor": "#7566FF",
+    "defaultPrompt": [
+      "Show the Neo-Nexus context for this project.",
+      "What client requests should I work on?",
+      "Check Neo-Nexus tracking health for this repo."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

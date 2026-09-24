@@ -1,0 +1,177 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import readline from 'node:readline';
+import {execFileSync} from 'node:child_process';
+
+const SERVER_INFO = {name: 'neo-nexus', version: '0.1.0'};
+const TOOLS = [
+  {
+    name: 'neo_nexus_current_project',
+    description: 'Read the linked Neo-Nexus project, progress, tracking assessment, and open client requests for a local Git repository. This never reads or uploads source files.',
+    inputSchema: {type: 'object', properties: {repository_path: {type: 'string', description: 'Absolute path inside the target Git repository. Defaults to the MCP process working directory.'}}, additionalProperties: false},
+  },
+  {
+    name: 'neo_nexus_tracking_health',
+    description: 'Check whether the current linked repository is connected, receiving Git activity, and ready for project context in Neo-Nexus.',
+    inputSchema: {type: 'object', properties: {repository_path: {type: 'string', description: 'Absolute path inside the target Git repository. Defaults to the MCP process working directory.'}}, additionalProperties: false},
+  },
+  {
+    name: 'neo_nexus_update_client_request',
+    description: 'Explicitly change one Neo-Nexus client request to open, in progress, or resolved. Resolving work requires user confirmation and this tool is configured for approval.',
+    inputSchema: {
+      type: 'object',
+      required: ['request_id', 'status'],
+      properties: {
+        repository_path: {type: 'string', description: 'Absolute path inside the linked Git repository. Defaults to the MCP process working directory.'},
+        request_id: {type: 'string', pattern: '^[1-9][0-9]*$', description: 'Exact Neo-Nexus request ID returned by neo_nexus_current_project.'},
+        status: {type: 'string', enum: ['open', 'in_progress', 'resolved']},
+      },
+      additionalProperties: false,
+    },
+  },
+];
+
+function stateDirectory() {
+  const configured = process.env.EMPLOYEE_TRACE_HOME;
+  if (configured && path.isAbsolute(configured)) return configured;
+  return path.join(os.homedir(), '.employee-trace');
+}
+
+function readDeviceConfig() {
+  const filename = path.join(stateDirectory(), 'config.json');
+  let stat;
+  try { stat = fs.lstatSync(filename); } catch { throw new Error('Neo-Nexus CLI is not connected on this device. Open Set up Neo-Nexus CLI in the web app first.'); }
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 131072) throw new Error('The Neo-Nexus CLI configuration is not a safe regular file.');
+  if (typeof process.getuid === 'function' && stat.uid !== process.getuid()) throw new Error('The Neo-Nexus CLI configuration belongs to another user.');
+  if ((stat.mode & 0o077) !== 0) throw new Error('The Neo-Nexus CLI configuration permissions are too broad. Run chmod 600 on its config.json file.');
+  let parsed;
+  try { parsed = JSON.parse(fs.readFileSync(filename, 'utf8')); } catch { throw new Error('The Neo-Nexus CLI configuration could not be read. Reconnect this device.'); }
+  const server = new URL(String(parsed.serverUrl || ''));
+  const local = server.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(server.hostname);
+  if ((server.protocol !== 'https:' && !local) || server.username || server.password || server.search || server.hash) throw new Error('The Neo-Nexus server address is invalid. Reconnect this device.');
+  if (!/^etn_[A-Za-z0-9_-]{43}$/.test(String(parsed.agentToken || ''))) throw new Error('The Neo-Nexus device credential is missing or expired. Reconnect this device.');
+  return {origin: server.origin, token: String(parsed.agentToken), clones: Array.isArray(parsed.clones) ? parsed.clones : []};
+}
+
+function gitRoot(repositoryPath) {
+  const target = repositoryPath === undefined || repositoryPath === '' ? process.cwd() : repositoryPath;
+  if (typeof target !== 'string' || !path.isAbsolute(target)) throw new Error('repository_path must be an absolute path.');
+  let root;
+  try { root = execFileSync('git', ['-C', target, 'rev-parse', '--show-toplevel'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000, maxBuffer: 65536}).trim(); }
+  catch { throw new Error('The selected folder is not inside a readable Git repository.'); }
+  try { return fs.realpathSync(root); } catch { throw new Error('The Git repository path is no longer available.'); }
+}
+
+function gitOrigin(root) {
+  let remote;
+  try { remote = execFileSync('git', ['-C', root, 'remote', 'get-url', 'origin'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000, maxBuffer: 65536}).trim(); }
+  catch { throw new Error('This repository has no origin remote and no local Neo-Nexus project binding. Link it from the Projects page first.'); }
+  if (!remote || remote.length > 2048 || /[\u0000-\u001f\u007f]/.test(remote) || /(?:password|passwd|token|secret|credential|api[_-]?key|private[_-]?key|gh[pousr]_|sk[-_])/i.test(remote)) throw new Error('This repository origin is not safe to send to Neo-Nexus.');
+  const scp = /^git@[a-z0-9.-]+:[^?#]+$/i.test(remote);
+  if (!scp) {
+    let parsed;
+    try { parsed = new URL(remote); } catch { throw new Error('This repository origin is not a supported hosted Git remote.'); }
+    if (!['https:', 'ssh:'].includes(parsed.protocol) || parsed.password || parsed.search || parsed.hash || (parsed.protocol === 'https:' && parsed.username) || (parsed.protocol === 'ssh:' && parsed.username !== 'git')) throw new Error('This repository origin contains credentials or is not a supported hosted Git remote.');
+  }
+  return remote;
+}
+
+function resolveLinkedProject(repositoryPath) {
+  const config = readDeviceConfig();
+  const root = gitRoot(repositoryPath);
+  const matches = config.clones.filter((clone) => {
+    if (!clone || !Number.isSafeInteger(Number(clone.workspaceId)) || Number(clone.workspaceId) < 1 || typeof clone.path !== 'string') return false;
+    try { return fs.realpathSync(clone.path) === root; } catch { return false; }
+  });
+  const projects = [...new Set(matches.map((clone) => Number(clone.workspaceId)))];
+  if (projects.length > 1) throw new Error('This repository is linked to more than one Neo-Nexus project. Resolve the duplicate link in Neo-Nexus.');
+  try { return {...config, repositoryUrl: gitOrigin(root)}; }
+  catch (error) {
+    if (projects.length === 1) return {...config, workspaceId: projects[0]};
+    throw error;
+  }
+}
+
+async function callNeoNexus(config, operation, body) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetch(`${config.origin}/api/agents/git/${operation}`, {
+      method: 'POST',
+      headers: {'content-type': 'application/json', authorization: `Bearer ${config.token}`},
+      body: JSON.stringify(body),
+      redirect: 'error',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(response.status === 401 ? 'Neo-Nexus rejected the device identity. Reconnect this device.' : response.status === 403 ? 'This checkout is not actively linked for this engineer and device. Link it and start Trace from the Neo-Nexus Projects page.' : `Neo-Nexus could not complete the request (${response.status}).`);
+    const text = await response.text();
+    if (text.length > 131072) throw new Error('Neo-Nexus returned more project data than the plugin accepts.');
+    return text ? JSON.parse(text) : {};
+  } catch (error) {
+    if (error?.name === 'AbortError') throw new Error('Neo-Nexus did not respond in time.');
+    throw error;
+  } finally { clearTimeout(timer); }
+}
+
+function result(summary, data) {
+  return {content: [{type: 'text', text: summary}], structuredContent: data};
+}
+
+function failure(error) {
+  const message = error instanceof Error ? error.message : 'Neo-Nexus request failed.';
+  return {content: [{type: 'text', text: message}], structuredContent: {ok: false, error: message}, isError: true};
+}
+
+async function context(argumentsValue = {}) {
+  const config = resolveLinkedProject(argumentsValue.repository_path);
+  const selector = config.workspaceId ? {workspaceId: config.workspaceId} : {repositoryUrl: config.repositoryUrl};
+  const data = await callNeoNexus(config, 'codex-context', selector);
+  return {config, data};
+}
+
+async function callTool(name, args) {
+  if (name === 'neo_nexus_current_project') {
+    const {data} = await context(args);
+    const open = Array.isArray(data.openClientRequests) ? data.openClientRequests : [];
+    const summary = `${data.project?.title || 'Neo-Nexus project'} is ${data.stage?.label || data.project?.status || 'available'}. ${open.length} open client request${open.length === 1 ? '' : 's'}. Tracking: ${data.assessment?.label || 'not assessed'}.`;
+    return result(summary, {ok: true, ...data});
+  }
+  if (name === 'neo_nexus_tracking_health') {
+    const {data} = await context(args);
+    const assessment = data.assessment || {};
+    return result(`${assessment.label || 'Tracking not assessed'}. ${assessment.detail || ''}`.trim(), {ok: true, project: data.project, assessment});
+  }
+  if (name === 'neo_nexus_update_client_request') {
+    if (!args || !/^[1-9]\d*$/.test(String(args.request_id || '')) || !['open', 'in_progress', 'resolved'].includes(String(args.status || ''))) throw new Error('An exact request_id and a valid status are required.');
+    const {config, data: projectData} = await context(args);
+    const workspaceId = Number(projectData.project?.id);
+    if (!Number.isSafeInteger(workspaceId) || workspaceId < 1) throw new Error('Neo-Nexus did not return a valid project identity.');
+    const data = await callNeoNexus(config, 'codex-request-status', {workspaceId, requestId: String(args.request_id), status: String(args.status)});
+    return result(`Client request ${args.request_id} is now ${String(args.status).replace('_', ' ')}.`, {ok: true, ...data});
+  }
+  throw new Error('Unknown Neo-Nexus tool.');
+}
+
+async function dispatch(message) {
+  if (message.method === 'initialize') return {protocolVersion: message.params?.protocolVersion || '2024-11-05', capabilities: {tools: {listChanged: false}}, serverInfo: SERVER_INFO};
+  if (message.method === 'ping') return {};
+  if (message.method === 'tools/list') return {tools: TOOLS};
+  if (message.method === 'tools/call') {
+    try { return await callTool(message.params?.name, message.params?.arguments || {}); }
+    catch (error) { return failure(error); }
+  }
+  throw Object.assign(new Error('Method not found'), {code: -32601});
+}
+
+function send(payload) { process.stdout.write(`${JSON.stringify(payload)}\n`); }
+const lines = readline.createInterface({input: process.stdin, crlfDelay: Infinity});
+lines.on('line', async (line) => {
+  let message;
+  try { message = JSON.parse(line); } catch { send({jsonrpc: '2.0', id: null, error: {code: -32700, message: 'Parse error'}}); return; }
+  if (message.id === undefined) return;
+  try { send({jsonrpc: '2.0', id: message.id, result: await dispatch(message)}); }
+  catch (error) { send({jsonrpc: '2.0', id: message.id, error: {code: Number.isInteger(error?.code) ? error.code : -32603, message: error instanceof Error ? error.message : 'Internal error'}}); }
+});
