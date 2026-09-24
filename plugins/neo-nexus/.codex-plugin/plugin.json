@@ -1,7 +1,7 @@
 {
   "name": "neo-nexus",
-  "version": "0.1.0+codex.20260924053938",
-  "description": "Connect Codex engineering work with Neo-Nexus projects and client requests.",
+  "version": "0.1.0+codex.20260924061410",
+  "description": "Connect Codex engineering work with Neo-Nexus projects, client requests, and daily project summaries.",
   "author": {
     "name": "Neodym",
     "url": "https://employee-tracker-cloud.vercel.app"
@@ -17,7 +17,7 @@
   "interface": {
     "displayName": "Neo-Nexus",
     "shortDescription": "Work on Neo-Nexus client requests from Codex.",
-    "longDescription": "Gives engineers permission-checked identity, project context, client tasks and issues, and Neo-Nexus tracking health inside Codex. Task status changes are attributed to the authenticated engineer and approved device. It never sends prompts or source files.",
+    "longDescription": "Gives engineers permission-checked identity, project context, client tasks and issues, and Neo-Nexus tracking health inside Codex. While Codex is open, it asks Neo-Nexus to publish one evidence-backed daily summary per connected project. Task status changes and summary runs are attributed to the authenticated engineer and approved device. It never sends prompts or source files.",
     "developerName": "Neodym",
     "category": "Productivity",
     "capabilities": [

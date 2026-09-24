@@ -5,7 +5,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import {execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.1.0'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.1.1'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -114,9 +114,9 @@ function resolveLinkedProject(repositoryPath) {
   }
 }
 
-async function callNeoNexus(config, operation, body) {
+async function callNeoNexus(config, operation, body, timeoutMs = 20000) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20000);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${config.origin}/api/agents/git/${operation}`, {
       method: 'POST',
@@ -151,6 +151,29 @@ function startPluginHeartbeat() {
   heartbeatStarted = true;
   void sendPluginHeartbeat();
   const timer = setInterval(() => void sendPluginHeartbeat(), 45_000);
+  timer.unref?.();
+}
+
+let dailySummariesStarted = false;
+let dailySummariesRunning = false;
+async function pushDailyProjectSummaries() {
+  if (dailySummariesRunning) return;
+  dailySummariesRunning = true;
+  try {
+    const config = readDeviceConfig();
+    for (let index = 0; index < 8; index += 1) {
+      const response = await callNeoNexus(config, 'codex-daily-summary', {pluginVersion: SERVER_INFO.version}, 240_000);
+      if (!response?.processed) break;
+    }
+  } catch { /* Setup reports the failed or stale daily-summary state; MCP tools remain available. */ }
+  finally { dailySummariesRunning = false; }
+}
+
+function startDailyProjectSummaries() {
+  if (dailySummariesStarted) return;
+  dailySummariesStarted = true;
+  void pushDailyProjectSummaries();
+  const timer = setInterval(() => void pushDailyProjectSummaries(), 60 * 60 * 1000);
   timer.unref?.();
 }
 
@@ -203,6 +226,7 @@ async function callTool(name, args) {
 async function dispatch(message) {
   if (message.method === 'initialize') {
     startPluginHeartbeat();
+    startDailyProjectSummaries();
     return {protocolVersion: message.params?.protocolVersion || '2024-11-05', capabilities: {tools: {listChanged: false}}, serverInfo: SERVER_INFO};
   }
   if (message.method === 'ping') return {};

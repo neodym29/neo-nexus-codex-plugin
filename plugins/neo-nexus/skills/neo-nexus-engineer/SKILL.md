@@ -27,11 +27,13 @@ Use Neo-Nexus as the project and client-request authority while Codex performs e
 ## Tracking and evidence
 
 - Use `neo_nexus_tracking_health` for questions about whether project activity is reaching Neo-Nexus.
+- While Codex is open, the plugin checks hourly whether each connected project needs its once-per-day summary. Neo-Nexus creates that summary from already-recorded, bounded project evidence and pushes it into the shared workspace.
+- Daily progress is a conservative estimate, is capped below completion, never decreases automatically, and never overwrites progress that a person set.
 - The installed `employee-trace` command and Git records remain the change-history source of truth. Plugin status updates add workflow context; they do not prove delivery, testing, or authorship.
 - Do not classify changes as AI-made or human-made. A recorded change is a change.
 
 ## Privacy
 
 - Never send prompts, conversation history, source code, diffs, secrets, or terminal history to Neo-Nexus.
-- The plugin sends only the authenticated profile lookup, linked project identifier, and explicit request-status changes through the existing authenticated Neo-Nexus device identity.
+- The plugin sends only authenticated heartbeats, linked-project lookups, explicit request-status changes, and a request for Neo-Nexus to summarize evidence already stored on its server. Daily summary requests contain no source code or conversation content.
 - Keep answers concise and understandable to a regular person with modest technical knowledge.
