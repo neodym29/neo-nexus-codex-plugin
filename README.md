@@ -7,6 +7,7 @@ The plugin lets an approved engineer use Codex to:
 - read the Neo-Nexus project connected to the current Git checkout;
 - see project progress, tracking health, and open client tasks or issue flags;
 - move a client request between open, in progress, and resolved with explicit approval.
+- verify which approved engineer and device the plugin is using.
 
 It reuses the device identity created by the Neo-Nexus Trace CLI. It does not upload repository source, diffs, prompts, terminal history, or local paths.
 
@@ -46,4 +47,4 @@ Restart Codex and start a new chat after installing an update.
 
 ## Access model
 
-The server independently verifies the current device, company, approved engineer account, active project membership, and approved repository binding. Installing the plugin alone never grants project access.
+The server independently verifies the current device, company, approved engineer account, active project membership, and approved repository binding. Each request-status change is audited to that engineer and device. Installing the plugin alone never grants project access.

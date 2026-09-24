@@ -6,7 +6,27 @@ import readline from 'node:readline';
 import {execFileSync} from 'node:child_process';
 
 const SERVER_INFO = {name: 'neo-nexus', version: '0.1.0'};
+const PROFILE_SCHEMA = {
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  type: 'object',
+  properties: {
+    id: {type: 'string', minLength: 1, pattern: '\\S', description: 'Stable opaque Neo-Nexus engineer profile ID.'},
+    name: {type: 'string', description: 'Engineer display name.'},
+    email: {type: 'string', description: 'Engineer work email.'},
+    nickname: {type: 'string', description: 'Engineer and approved-device label.'},
+  },
+  required: ['id'],
+  additionalProperties: false,
+};
 const TOOLS = [
+  {
+    name: 'neo_nexus_whoami',
+    description: 'Return the approved Neo-Nexus engineer and device represented by this plugin connection. The stable opaque ID identifies the engineer without using their email as identity.',
+    inputSchema: {type: 'object', properties: {}, additionalProperties: false},
+    outputSchema: PROFILE_SCHEMA,
+    annotations: {readOnlyHint: true, destructiveHint: false, openWorldHint: false},
+    _meta: {'openai/profile': true},
+  },
   {
     name: 'neo_nexus_current_project',
     description: 'Read the linked Neo-Nexus project, progress, tracking assessment, and open client requests for a local Git repository. This never reads or uploads source files.',
@@ -133,6 +153,13 @@ async function context(argumentsValue = {}) {
 }
 
 async function callTool(name, args) {
+  if (name === 'neo_nexus_whoami') {
+    const config = readDeviceConfig();
+    const data = await callNeoNexus(config, 'codex-profile', {});
+    const profile = {id: String(data.id || ''), ...(data.name ? {name: String(data.name)} : {}), ...(data.email ? {email: String(data.email)} : {}), ...(data.nickname ? {nickname: String(data.nickname)} : {})};
+    if (!profile.id.trim()) throw new Error('Neo-Nexus did not return a valid engineer identity.');
+    return {content: [{type: 'text', text: `Connected as ${profile.nickname || profile.name || profile.email || 'an approved Neo-Nexus engineer'}.`}], structuredContent: profile};
+  }
   if (name === 'neo_nexus_current_project') {
     const {data} = await context(args);
     const open = Array.isArray(data.openClientRequests) ? data.openClientRequests : [];
