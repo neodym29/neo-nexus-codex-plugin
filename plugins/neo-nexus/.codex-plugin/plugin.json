@@ -1,6 +1,6 @@
 {
   "name": "neo-nexus",
-  "version": "0.1.0+codex.20260924072615",
+  "version": "0.1.0+codex.20260924144255",
   "description": "Publish privacy-safe Codex work updates from registered projects and other engineering chats to Neo-Nexus.",
   "author": {
     "name": "Neodym",
@@ -32,7 +32,8 @@
       "What client requests should I work on?",
       "Record the meaningful work I completed for this project.",
       "Record this unlinked task under Other work.",
-      "Check Neo-Nexus tracking health for this repo."
+      "Check Neo-Nexus tracking health for this repo.",
+      "Verify and update this project's production deployment link."
     ]
   },
   "mcpServers": "./.mcp.json"

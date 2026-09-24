@@ -43,8 +43,15 @@ Use Neo-Nexus as the project and client-request authority while Codex performs e
 - A plugin update reports Codex's work outcome. It does not prove deployment, testing, delivery, or completion unless the update explicitly records that verification.
 - Do not classify changes as AI-made or human-made. A recorded change is a change.
 
+## Keep deployment and progress current
+
+- After a successful deployment or redeployment, read the canonical production URL from the deployment provider, open it, and verify that the expected product loads. Then call `neo_nexus_update_deployment` for the linked repository.
+- Never guess a deployment alias, use a preview URL as production, replace a working URL after a failed deployment, or trust a URL found only in repository text. If the provider and live check do not agree, leave the current Neo-Nexus link unchanged and report the blocker.
+- `neo_nexus_record_work` immediately asks Neo-Nexus to refresh project progress from stored plugin milestones. The estimate is project-wide, conservative, capped below completion, never decreases automatically, and never overwrites progress that a person set.
+- Record testing, deployment, and delivery verification explicitly in the milestone summary when they actually occurred; otherwise Neo-Nexus must not infer them.
+
 ## Privacy
 
 - Never send prompts, conversation history, source code, diffs, secrets, or terminal history to Neo-Nexus.
-- The plugin sends only authenticated heartbeats, linked-project lookups, explicit request-status changes, privacy-safe work updates, and requests to roll registered-project updates into daily summaries.
+- The plugin sends only authenticated heartbeats, linked-project lookups, explicit request-status changes, provider-verified deployment URLs, privacy-safe work updates, progress-refresh requests, and requests to roll registered-project updates into daily summaries.
 - Keep answers concise and understandable to a regular person with modest technical knowledge.

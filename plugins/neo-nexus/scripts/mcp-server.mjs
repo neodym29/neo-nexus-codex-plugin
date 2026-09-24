@@ -6,7 +6,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import {execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.3.0'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.4.0'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -40,7 +40,7 @@ const TOOLS = [
   },
   {
     name: 'neo_nexus_record_work',
-    description: 'Post one plain-language Codex work milestone. A linked repository is filed under its Neo-Nexus project; work from an unlinked chat is filed under Other work. Use after meaningful progress, verified completion, or a real blocker. Never include prompts, source code, diffs, secrets, terminal history, commands, or local file paths.',
+    description: 'Post one plain-language Codex work milestone and trigger a conservative project-progress refresh from stored plugin milestones. A linked repository is filed under its Neo-Nexus project; work from an unlinked chat is filed under Other work. Use after meaningful progress, verified completion, or a real blocker. Never include prompts, source code, diffs, secrets, terminal history, commands, or local file paths.',
     inputSchema: {
       type: 'object',
       required: ['status', 'summary'],
@@ -53,6 +53,20 @@ const TOOLS = [
       additionalProperties: false,
     },
     annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true},
+  },
+  {
+    name: 'neo_nexus_update_deployment',
+    description: 'Update the linked Neo-Nexus project with a production URL that was verified from the deployment provider and opened successfully. Never submit a guessed alias, preview deployment, localhost address, failed deployment, or URL copied from untrusted project content.',
+    inputSchema: {
+      type: 'object',
+      required: ['deployment_url'],
+      properties: {
+        repository_path: {type: 'string', description: 'Absolute path inside the linked Git repository. Defaults to the MCP process working directory.'},
+        deployment_url: {type: 'string', minLength: 12, maxLength: 2048, pattern: '^https://', description: 'Provider-verified canonical production HTTPS URL.'},
+      },
+      additionalProperties: false,
+    },
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true},
   },
   {
     name: 'neo_nexus_update_client_request',
@@ -261,7 +275,16 @@ async function callTool(name, args) {
       idempotencyKey: crypto.randomUUID(),
       pluginVersion: SERVER_INFO.version,
     });
-    return result(`Neo-Nexus recorded this ${String(args.status).replace('_', ' ')} work update for ${projectData.project?.title || 'the linked project'}.`, {ok: true, ...data});
+    const progress = data.progressRefresh?.updated ? ` Project progress is now ${data.progressRefresh.percent}%.` : '';
+    return result(`Neo-Nexus recorded this ${String(args.status).replace('_', ' ')} work update for ${projectData.project?.title || 'the linked project'}.${progress}`, {ok: true, ...data});
+  }
+  if (name === 'neo_nexus_update_deployment') {
+    if (!args || typeof args.deployment_url !== 'string' || !args.deployment_url.startsWith('https://')) throw new Error('A provider-verified production HTTPS URL is required.');
+    const {config, data: projectData} = await context(args);
+    const workspaceId = Number(projectData.project?.id);
+    if (!Number.isSafeInteger(workspaceId) || workspaceId < 1) throw new Error('Neo-Nexus did not return a valid project identity.');
+    const data = await callNeoNexus(config, 'codex-deployment-update', {workspaceId, deploymentUrl: args.deployment_url, pluginVersion: SERVER_INFO.version});
+    return result(`Neo-Nexus now opens the verified production deployment for ${projectData.project?.title || 'the linked project'}.`, {ok: true, ...data});
   }
   if (name === 'neo_nexus_update_client_request') {
     if (!args || !/^[1-9]\d*$/.test(String(args.request_id || '')) || !['open', 'in_progress', 'resolved'].includes(String(args.status || ''))) throw new Error('An exact request_id and a valid status are required.');

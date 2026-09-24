@@ -9,6 +9,8 @@ The plugin lets an approved engineer use Codex to:
 - move a client request between open, in progress, and resolved with explicit approval.
 - verify which approved engineer and device the plugin is using.
 - post plain-language work milestones to the project dashboard as meaningful Codex work is completed;
+- refresh project progress conservatively from those verified milestones as they are posted;
+- keep the project's live-app link current from a provider-verified production deployment;
 - file work from unregistered repositories and projectless chats under **Other work**.
 
 It reuses the device identity created by the Neo-Nexus setup. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, secrets, terminal history, commands, or local paths.
@@ -36,6 +38,7 @@ Useful prompts:
 - `What client requests should I work on?`
 - `Record the meaningful work I completed for this project.`
 - `Check Neo-Nexus tracking health for this repo.`
+- `Verify and update this project's production deployment link.`
 
 ## Update
 
