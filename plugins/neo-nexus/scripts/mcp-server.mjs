@@ -136,6 +136,24 @@ async function callNeoNexus(config, operation, body) {
   } finally { clearTimeout(timer); }
 }
 
+let heartbeatStarted = false;
+let heartbeatRunning = false;
+async function sendPluginHeartbeat() {
+  if (heartbeatRunning) return;
+  heartbeatRunning = true;
+  try { await callNeoNexus(readDeviceConfig(), 'codex-heartbeat', {pluginVersion: SERVER_INFO.version}); }
+  catch { /* Setup shows a missing/stale connection; MCP stays available for recovery. */ }
+  finally { heartbeatRunning = false; }
+}
+
+function startPluginHeartbeat() {
+  if (heartbeatStarted) return;
+  heartbeatStarted = true;
+  void sendPluginHeartbeat();
+  const timer = setInterval(() => void sendPluginHeartbeat(), 45_000);
+  timer.unref?.();
+}
+
 function result(summary, data) {
   return {content: [{type: 'text', text: summary}], structuredContent: data};
 }
@@ -183,7 +201,10 @@ async function callTool(name, args) {
 }
 
 async function dispatch(message) {
-  if (message.method === 'initialize') return {protocolVersion: message.params?.protocolVersion || '2024-11-05', capabilities: {tools: {listChanged: false}}, serverInfo: SERVER_INFO};
+  if (message.method === 'initialize') {
+    startPluginHeartbeat();
+    return {protocolVersion: message.params?.protocolVersion || '2024-11-05', capabilities: {tools: {listChanged: false}}, serverInfo: SERVER_INFO};
+  }
   if (message.method === 'ping') return {};
   if (message.method === 'tools/list') return {tools: TOOLS};
   if (message.method === 'tools/call') {
