@@ -12,9 +12,9 @@ The plugin lets an approved engineer use Codex to:
 - post plain-language work milestones to the project dashboard as meaningful Codex work is completed;
 - refresh project progress conservatively from those verified milestones as they are posted;
 - keep the project's live-app link current from a provider-verified production deployment;
-- file work from unregistered repositories and projectless chats under **Other work**.
+- file unregistered work under **Other work** only when the engineer explicitly asks to report it to Neo-Nexus.
 
-It reuses the device identity created by the Neo-Nexus setup. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, secrets, terminal history, commands, or local paths.
+It reuses the device identity created by the Neo-Nexus setup. The skill applies to Neo-Nexus itself and repositories connected to approved Neo-Nexus projects. It does not run for unrelated Codex work. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, secrets, terminal history, commands, or local paths.
 
 ## Install
 
@@ -45,7 +45,9 @@ Useful prompts:
 
 ## Update
 
-Refresh the marketplace with:
+The plugin checks the Neodym marketplace on startup and once per day while Codex is open. It installs available updates in the background. Codex loads the refreshed plugin files after its next restart. If Codex has been closed, the check runs the next time it opens.
+
+To force an immediate refresh:
 
 ```bash
 codex plugin marketplace upgrade neodym

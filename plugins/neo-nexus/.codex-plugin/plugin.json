@@ -1,6 +1,6 @@
 {
   "name": "neo-nexus",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Connect repositories to approved projects and publish privacy-safe Codex work updates to Neo-Nexus.",
   "author": {
     "name": "Neodym",
@@ -16,8 +16,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Neo-Nexus",
-    "shortDescription": "Report project and other Codex work to Neo-Nexus.",
-    "longDescription": "Gives engineers permission-checked identity, explicit repository-to-project connection, project context, client tasks and issues, and privacy-safe work reporting inside Codex. Linked work appears under its project; meaningful work from unregistered repositories and projectless chats appears under Other work. Neo-Nexus never receives prompts, source files, diffs, secrets, terminal history, commands, or local paths.",
+    "shortDescription": "Connect approved Neo-Nexus projects to Codex.",
+    "longDescription": "For Neo-Nexus projects, gives engineers permission-checked identity, explicit repository-to-project connection, project context, client tasks and issues, and privacy-safe work reporting inside Codex. Unrelated Codex tasks are outside this plugin's workflow. Neo-Nexus never receives prompts, source files, diffs, secrets, terminal history, commands, or local paths.",
     "developerName": "Neodym",
     "category": "Productivity",
     "capabilities": [
@@ -33,7 +33,6 @@
       "Show the Neo-Nexus context for this project.",
       "What client requests should I work on?",
       "Record the meaningful work I completed for this project.",
-      "Record this unlinked task under Other work.",
       "Check Neo-Nexus tracking health for this repo.",
       "Verify and update this project's production deployment link."
     ]

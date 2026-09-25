@@ -4,9 +4,9 @@ import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
-import {execFileSync} from 'node:child_process';
+import {execFile, execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.6.0'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.6.1'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -60,7 +60,7 @@ const TOOLS = [
   },
   {
     name: 'neo_nexus_record_work',
-    description: 'Post one plain-language Codex work milestone and trigger a conservative project-progress refresh from stored plugin milestones. A linked repository is filed under its Neo-Nexus project; work from an unlinked chat is filed under Other work. Use after meaningful progress, verified completion, or a real blocker. Never include prompts, source code, diffs, secrets, terminal history, commands, or local file paths.',
+    description: 'For a connected Neo-Nexus project, post one plain-language work milestone and refresh project progress. Use for unrelated work only when the user explicitly asks to report it to Neo-Nexus under Other work. Never include prompts, source code, diffs, secrets, terminal history, commands, or local file paths.',
     inputSchema: {
       type: 'object',
       required: ['status', 'summary'],
@@ -108,6 +108,45 @@ function stateDirectory() {
   const configured = process.env.EMPLOYEE_TRACE_HOME;
   if (configured && path.isAbsolute(configured)) return configured;
   return path.join(os.homedir(), '.employee-trace');
+}
+
+// Codex loads plugin files at process startup. Refresh the trusted Neodym
+// marketplace in the background; a new Codex chat picks up the installed copy.
+let updateStarted = false;
+function startPluginAutoUpdate() {
+  if (updateStarted) return;
+  updateStarted = true;
+  const directory = stateDirectory();
+  const stateFile = path.join(directory, 'neo-nexus-plugin-update.json');
+  const lockFile = path.join(directory, 'neo-nexus-plugin-update.lock');
+  const check = () => {
+    let state = {};
+    try { state = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch { /* First update. */ }
+    const now = Date.now();
+    if (now - Number(state.lastSuccess || 0) < 24 * 60 * 60 * 1000 || now - Number(state.lastAttempt || 0) < 60 * 60 * 1000) return;
+    try {
+      const stat = fs.statSync(lockFile);
+      if (now - stat.mtimeMs < 10 * 60 * 1000) return;
+      fs.unlinkSync(lockFile);
+    } catch { /* No active updater. */ }
+    let lock;
+    try { lock = fs.openSync(lockFile, 'wx', 0o600); } catch { return; }
+    fs.closeSync(lock);
+    const save = (value) => {
+      try { fs.writeFileSync(stateFile, JSON.stringify(value), {mode: 0o600}); } catch { /* The next session can retry. */ }
+    };
+    const finish = (successful) => {
+      save({lastAttempt: now, lastSuccess: successful ? Date.now() : Number(state.lastSuccess || 0)});
+      try { fs.unlinkSync(lockFile); } catch { /* Already removed. */ }
+    };
+    save({lastAttempt: now, lastSuccess: Number(state.lastSuccess || 0)});
+    execFile('codex', ['plugin', 'marketplace', 'upgrade', 'neodym'], {timeout: 120_000, maxBuffer: 64_000}, (upgradeError) => {
+      if (upgradeError) { finish(false); return; }
+      execFile('codex', ['plugin', 'add', 'neo-nexus@neodym'], {timeout: 120_000, maxBuffer: 64_000}, (installError) => finish(!installError));
+    });
+  };
+  setTimeout(check, 2_000).unref?.();
+  setInterval(check, 60 * 60 * 1000).unref?.();
 }
 
 function readDeviceConfig() {
@@ -367,6 +406,7 @@ async function callTool(name, args) {
 
 async function dispatch(message) {
   if (message.method === 'initialize') {
+    startPluginAutoUpdate();
     startPluginHeartbeat();
     startDailyProjectSummaries();
     return {protocolVersion: message.params?.protocolVersion || '2024-11-05', capabilities: {tools: {listChanged: false}}, serverInfo: SERVER_INFO};
