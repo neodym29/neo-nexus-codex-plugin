@@ -14,7 +14,7 @@ The plugin lets an approved engineer use Codex to:
 - keep the project's live-app link current from a provider-verified production deployment;
 - file unregistered work under **Other work** only when the engineer explicitly asks to report it to Neo-Nexus.
 
-It reuses the device identity created by the Neo-Nexus setup. The skill applies to Neo-Nexus itself and repositories connected to approved Neo-Nexus projects. It does not run for unrelated Codex work. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, secrets, terminal history, commands, or local paths.
+It reuses the device identity created by the Neo-Nexus setup. The skill applies only when an engineer explicitly requests Neo-Nexus integration or works in a repository already known to be connected to an approved Neo-Nexus project. Editing the Neo-Nexus app alone does not activate it, and it does not run for unrelated Codex work. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, secrets, terminal history, commands, or local paths.
 
 ## Install
 

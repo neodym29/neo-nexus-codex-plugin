@@ -1,6 +1,6 @@
 {
   "name": "neo-nexus",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Connect repositories to approved projects and publish privacy-safe Codex work updates to Neo-Nexus.",
   "author": {
     "name": "Neodym",

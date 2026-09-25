@@ -1,11 +1,11 @@
 ---
 name: neo-nexus-engineer
-description: Use only when the user is working on Neo-Nexus itself, explicitly asks to use Neo-Nexus, or the current repository is already linked to an approved Neo-Nexus project. Do not use for unrelated Codex work.
+description: Use only when the user explicitly asks to use Neo-Nexus or the current repository is already known to be connected to an approved Neo-Nexus project. Editing the Neo-Nexus app alone does not activate this skill.
 ---
 
 # Neo-Nexus engineer workflow
 
-Use Neo-Nexus as the project and client-request authority only for Neo-Nexus work or an already connected Neo-Nexus project. Do not call Neo-Nexus tools, identify the engineer, or publish updates for unrelated repositories or ordinary projectless chats. **Other work** is available only when the user explicitly asks to report that work to Neo-Nexus.
+Use Neo-Nexus as the project and client-request authority only when the user explicitly requests its integration or the current repository is already known to be connected to an approved Neo-Nexus project. Merely editing Neo-Nexus itself is not a reason to activate this workflow. Do not call Neo-Nexus tools, identify the engineer, or publish updates for unrelated repositories or ordinary projectless chats. **Other work** is available only when the user explicitly asks to report that work to Neo-Nexus.
 
 ## Start with project context
 
