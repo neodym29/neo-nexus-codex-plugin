@@ -31,7 +31,7 @@ Add the marketplace once:
 codex plugin marketplace add neodym29/neo-nexus-codex-plugin
 ```
 
-Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. An exact configured Git-remote match connects automatically; otherwise ask the plugin to list projects and connect the repository to the exact project you choose. Connected repositories are grouped under their projects; all other meaningful engineering chats are summarized under **Other work**.
+Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. An exact configured Git-remote match connects automatically; otherwise ask the plugin to list projects and connect the repository to the exact project you choose. Repositories without a hosted remote can be turned into projects directly from Neo-Nexus. Until that happens, their work stays under **Other work** with a privacy-safe device-scoped repository identity; Neo-Nexus moves those matching updates into the project automatically when it is created. No local path is uploaded.
 
 Useful prompts:
 

@@ -6,7 +6,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import {execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.5.0'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.6.0'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -147,6 +147,25 @@ function gitOrigin(root) {
     if (!['https:', 'ssh:'].includes(parsed.protocol) || parsed.password || parsed.search || parsed.hash || (parsed.protocol === 'https:' && parsed.username) || (parsed.protocol === 'ssh:' && parsed.username !== 'git')) throw new Error('This repository origin contains credentials or is not a supported hosted Git remote.');
   }
   return remote;
+}
+
+function localRepositoryKey(config, root) {
+  const gitDirectory = fs.realpathSync(execFileSync('git', ['-C', root, 'rev-parse', '--absolute-git-dir'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000, maxBuffer: 65536}).trim());
+  const stat = fs.statSync(gitDirectory);
+  const fingerprint = crypto.createHash('sha256').update(`${stat.dev}:${stat.ino}:${stat.birthtimeMs}`).digest('hex');
+  return `local:${crypto.createHmac('sha256', config.token).update(`${root}\0${fingerprint}`).digest('hex')}`;
+}
+
+function workRepositoryIdentity(repositoryPath) {
+  const config = readDeviceConfig();
+  let root;
+  try { root = gitRoot(repositoryPath); }
+  catch { return {config}; }
+  try { return {config, repositoryUrl: gitOrigin(root)}; }
+  catch (error) {
+    if (!/no origin remote/i.test(error instanceof Error ? error.message : '')) throw error;
+    return {config, repositoryKey: localRepositoryKey(config, root)};
+  }
 }
 
 function resolveLinkedProject(repositoryPath) {
@@ -300,11 +319,14 @@ async function callTool(name, args) {
     try { linked = await context(args); }
     catch (error) {
       if (!isUnlinkedWorkError(error)) throw error;
-      const config = readDeviceConfig();
+      const identity = workRepositoryIdentity(args.repository_path);
+      const {config} = identity;
       const data = await callNeoNexus(config, 'codex-other-work-update', {
         status: String(args.status),
         summary: String(args.summary),
         ...(typeof args.next_step === 'string' && args.next_step.trim() ? {nextStep: args.next_step.trim()} : {}),
+        ...('repositoryUrl' in identity ? {repositoryUrl: identity.repositoryUrl} : {}),
+        ...('repositoryKey' in identity ? {repositoryKey: identity.repositoryKey} : {}),
         idempotencyKey: crypto.randomUUID(),
         pluginVersion: SERVER_INFO.version,
       });
