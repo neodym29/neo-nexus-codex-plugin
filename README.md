@@ -12,6 +12,7 @@ The plugin lets an approved engineer use Codex to:
 - post plain-language work milestones to the project dashboard as meaningful Codex work is completed;
 - refresh project progress conservatively from those verified milestones as they are posted;
 - keep the project's live-app link current from a provider-verified production deployment;
+- publish verified, plain-language usage steps that remain in the project's automatically refreshed guide;
 - file unregistered work under **Other work** only when the engineer explicitly asks to report it to Neo-Nexus.
 
 It reuses the device identity created by the Neo-Nexus setup. The skill applies only when an engineer explicitly requests Neo-Nexus integration or works in a repository already known to be connected to an approved Neo-Nexus project. Editing the Neo-Nexus app alone does not activate it, and it does not run for unrelated Codex work. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, secrets, terminal history, commands, or local paths.

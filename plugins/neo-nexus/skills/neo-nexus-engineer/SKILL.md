@@ -52,6 +52,12 @@ Use Neo-Nexus as the project and client-request authority only when the user exp
 - `neo_nexus_record_work` immediately asks Neo-Nexus to refresh project progress from stored plugin milestones. The estimate is project-wide, conservative, capped below completion, never decreases automatically, and never overwrites progress that a person set.
 - Record testing, deployment, and delivery verification explicitly in the milestone summary when they actually occurred; otherwise Neo-Nexus must not infer them.
 
+## Maintain the project usage guide
+
+- When a linked project is first added, or its actual usage changes, use `neo_nexus_publish_usage_guide` to provide concise steps a client can follow. Verify the workflow before publishing. Include prerequisites and explain whether use requires a browser, local installation, or a team invitation. Do not invent steps from a project title or milestone.
+- The website creates the guide when a project is formed. It combines engineer-provided steps with the recorded deployment link and plugin milestones. Plugin work updates and the once-per-day rollup refresh the guide automatically while preserving the provided steps.
+- Never send source files, README contents, prompts, secrets, local paths, or terminal output as usage instructions. If steps cannot be verified, leave the guide's explicit unknown-state message intact and ask the project owner for the missing information.
+
 ## Privacy
 
 - Never send prompts, conversation history, source code, diffs, secrets, or terminal history to Neo-Nexus.

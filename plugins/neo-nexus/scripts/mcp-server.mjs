@@ -6,7 +6,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import {execFile, execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.6.2'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.6.3'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -83,6 +83,20 @@ const TOOLS = [
       properties: {
         repository_path: {type: 'string', description: 'Absolute path inside the linked Git repository. Defaults to the MCP process working directory.'},
         deployment_url: {type: 'string', minLength: 12, maxLength: 2048, pattern: '^https://', description: 'Provider-verified canonical production HTTPS URL.'},
+      },
+      additionalProperties: false,
+    },
+    annotations: {readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true},
+  },
+  {
+    name: 'neo_nexus_publish_usage_guide',
+    description: 'Publish verified, plain-language steps for using the linked Neo-Nexus project. The usage guide includes these steps, the recorded live link if present, and plugin milestones. Do not include source, prompts, secrets, local paths, or guesses.',
+    inputSchema: {
+      type: 'object',
+      required: ['instructions'],
+      properties: {
+        repository_path: {type: 'string', description: 'Absolute path inside the linked Git repository. Defaults to the MCP process working directory.'},
+        instructions: {type: 'string', minLength: 20, maxLength: 4000, description: 'Verified plain-language access and usage steps; state prerequisites and limitations. No source code or secrets.'},
       },
       additionalProperties: false,
     },
@@ -392,6 +406,14 @@ async function callTool(name, args) {
     if (!Number.isSafeInteger(workspaceId) || workspaceId < 1) throw new Error('Neo-Nexus did not return a valid project identity.');
     const data = await callNeoNexus(config, 'codex-deployment-update', {workspaceId, deploymentUrl: args.deployment_url, pluginVersion: SERVER_INFO.version});
     return result(`Neo-Nexus now opens the verified production deployment for ${projectData.project?.title || 'the linked project'}.`, {ok: true, ...data});
+  }
+  if (name === 'neo_nexus_publish_usage_guide') {
+    if (!args || typeof args.instructions !== 'string' || args.instructions.trim().length < 20 || args.instructions.length > 4000) throw new Error('Verified usage instructions of 20–4000 characters are required.');
+    const {config, data: projectData} = await context(args);
+    const workspaceId = Number(projectData.project?.id);
+    if (!Number.isSafeInteger(workspaceId) || workspaceId < 1) throw new Error('Neo-Nexus did not return a valid project identity.');
+    const data = await callNeoNexus(config, 'codex-usage-guide', {workspaceId, instructions: args.instructions.trim(), pluginVersion: SERVER_INFO.version});
+    return result(`Updated the usage guide for ${projectData.project?.title || 'the linked project'}.`, {ok: true, ...data});
   }
   if (name === 'neo_nexus_update_client_request') {
     if (!args || !/^[1-9]\d*$/.test(String(args.request_id || '')) || !['open', 'in_progress', 'resolved'].includes(String(args.status || ''))) throw new Error('An exact request_id and a valid status are required.');
