@@ -15,6 +15,6 @@ test('unlinked repository work sends a privacy-safe repository identity', () => 
 
 test('plugin release version is consistent', () => {
   const manifest = JSON.parse(fs.readFileSync(new URL('../plugins/neo-nexus/.codex-plugin/plugin.json', import.meta.url), 'utf8'));
-  assert.equal(manifest.version, '0.6.3');
-  assert.match(source, /SERVER_INFO = \{name: 'neo-nexus', version: '0\.6\.3'\}/);
+  assert.equal(manifest.version, '0.6.4');
+  assert.match(source, /SERVER_INFO = \{name: 'neo-nexus', version: '0\.6\.4'\}/);
 });

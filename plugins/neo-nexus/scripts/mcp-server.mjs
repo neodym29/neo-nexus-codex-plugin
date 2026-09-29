@@ -6,7 +6,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import {execFile, execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.6.3'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.6.4'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -30,23 +30,23 @@ const TOOLS = [
   },
   {
     name: 'neo_nexus_current_project',
-    description: 'Read the linked Neo-Nexus project, progress, tracking assessment, and open client requests for a local Git repository. This never reads or uploads source files.',
-    inputSchema: {type: 'object', properties: {repository_path: {type: 'string', description: 'Absolute path inside the target Git repository. Defaults to the MCP process working directory.'}}, additionalProperties: false},
+    description: 'Read the linked Neo-Nexus project, progress, tracking assessment, and open client requests for a project folder. Git commits and a hosted remote are optional. This never reads or uploads source files.',
+    inputSchema: {type: 'object', properties: {repository_path: {type: 'string', description: 'Absolute project folder path. Defaults to the MCP process working directory.'}}, additionalProperties: false},
   },
   {
     name: 'neo_nexus_list_projects',
-    description: 'List the approved Neo-Nexus projects this engineer can connect to the selected Git repository. Exact remote matches are identified without reading or uploading source files.',
-    inputSchema: {type: 'object', properties: {repository_path: {type: 'string', description: 'Absolute path inside the target Git repository. Defaults to the MCP process working directory.'}}, additionalProperties: false},
+    description: 'List approved Neo-Nexus projects for this project folder. Exact hosted-remote or approved local-device matches are identified without reading or uploading source files.',
+    inputSchema: {type: 'object', properties: {repository_path: {type: 'string', description: 'Absolute project folder path. Defaults to the MCP process working directory.'}}, additionalProperties: false},
     annotations: {readOnlyHint: true, destructiveHint: false, openWorldHint: false},
   },
   {
     name: 'neo_nexus_connect_project',
-    description: 'Connect the selected Git repository to one exact approved Neo-Nexus project for this engineer and device. Use a project ID returned by neo_nexus_list_projects. This does not enable Git telemetry or upload source files.',
+    description: 'Connect a project folder to one exact approved Neo-Nexus project for this engineer and device. Use a project ID returned by neo_nexus_list_projects. Git telemetry is optional; no source files are uploaded.',
     inputSchema: {
       type: 'object',
       required: ['project_id'],
       properties: {
-        repository_path: {type: 'string', description: 'Absolute path inside the target Git repository. Defaults to the MCP process working directory.'},
+        repository_path: {type: 'string', description: 'Absolute project folder path. Defaults to the MCP process working directory.'},
         project_id: {type: 'string', pattern: '^[1-9][0-9]*$', description: 'Exact project ID returned by neo_nexus_list_projects.'},
       },
       additionalProperties: false,
@@ -55,17 +55,17 @@ const TOOLS = [
   },
   {
     name: 'neo_nexus_tracking_health',
-    description: 'Check whether the current linked repository is connected, receiving Git activity, and ready for project context in Neo-Nexus.',
-    inputSchema: {type: 'object', properties: {repository_path: {type: 'string', description: 'Absolute path inside the target Git repository. Defaults to the MCP process working directory.'}}, additionalProperties: false},
+    description: 'Check whether the current project folder is connected and ready for Neo-Nexus work updates. Git activity is optional.',
+    inputSchema: {type: 'object', properties: {repository_path: {type: 'string', description: 'Absolute project folder path. Defaults to the MCP process working directory.'}}, additionalProperties: false},
   },
   {
     name: 'neo_nexus_record_work',
-    description: 'For a connected Neo-Nexus project, post one plain-language work milestone and refresh project progress. Use for unrelated work only when the user explicitly asks to report it to Neo-Nexus under Other work. Never include prompts, source code, diffs, secrets, terminal history, commands, or local file paths.',
+    description: 'For a connected Neo-Nexus project folder, post one plain-language work milestone and refresh project progress even when local changes are uncommitted. Use for unrelated work only when the user explicitly asks to report it to Neo-Nexus under Other work. Never include prompts, source code, diffs, secrets, terminal history, commands, or local file paths.',
     inputSchema: {
       type: 'object',
       required: ['status', 'summary'],
       properties: {
-        repository_path: {type: 'string', description: 'Absolute path for the work when available. Linked repositories are matched to their project; other folders are reported as Other work.'},
+        repository_path: {type: 'string', description: 'Absolute project folder path when available. Linked folders are matched to their project; other folders are reported as Other work.'},
         status: {type: 'string', enum: ['in_progress', 'completed', 'blocked']},
         summary: {type: 'string', minLength: 8, maxLength: 600, description: 'A concise non-technical description of the work outcome.'},
         next_step: {type: 'string', maxLength: 500, description: 'The next concrete step, if one remains.'},
@@ -81,7 +81,7 @@ const TOOLS = [
       type: 'object',
       required: ['deployment_url'],
       properties: {
-        repository_path: {type: 'string', description: 'Absolute path inside the linked Git repository. Defaults to the MCP process working directory.'},
+        repository_path: {type: 'string', description: 'Absolute linked project folder path. Defaults to the MCP process working directory.'},
         deployment_url: {type: 'string', minLength: 12, maxLength: 2048, pattern: '^https://', description: 'Provider-verified canonical production HTTPS URL.'},
       },
       additionalProperties: false,
@@ -95,7 +95,7 @@ const TOOLS = [
       type: 'object',
       required: ['instructions'],
       properties: {
-        repository_path: {type: 'string', description: 'Absolute path inside the linked Git repository. Defaults to the MCP process working directory.'},
+        repository_path: {type: 'string', description: 'Absolute linked project folder path. Defaults to the MCP process working directory.'},
         instructions: {type: 'string', minLength: 20, maxLength: 4000, description: 'Verified plain-language access and usage steps; state prerequisites and limitations. No source code or secrets.'},
       },
       additionalProperties: false,
@@ -109,7 +109,7 @@ const TOOLS = [
       type: 'object',
       required: ['request_id', 'status'],
       properties: {
-        repository_path: {type: 'string', description: 'Absolute path inside the linked Git repository. Defaults to the MCP process working directory.'},
+        repository_path: {type: 'string', description: 'Absolute linked project folder path. Defaults to the MCP process working directory.'},
         request_id: {type: 'string', pattern: '^[1-9][0-9]*$', description: 'Exact Neo-Nexus request ID returned by neo_nexus_current_project.'},
         status: {type: 'string', enum: ['open', 'in_progress', 'resolved']},
       },
@@ -202,38 +202,52 @@ function gitOrigin(root) {
   return remote;
 }
 
-function localRepositoryKey(config, root) {
-  const gitDirectory = fs.realpathSync(execFileSync('git', ['-C', root, 'rev-parse', '--absolute-git-dir'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000, maxBuffer: 65536}).trim());
-  const stat = fs.statSync(gitDirectory);
+function projectFolder(repositoryPath) {
+  const target = repositoryPath === undefined || repositoryPath === '' ? process.cwd() : repositoryPath;
+  if (typeof target !== 'string' || !path.isAbsolute(target)) throw new Error('repository_path must be an absolute path.');
+  let root;
+  try { root = fs.realpathSync(target); if (!fs.statSync(root).isDirectory()) throw new Error(); }
+  catch { throw new Error('The project folder is not a readable directory.'); }
+  try { return {root: gitRoot(root), git: true}; }
+  catch { return {root, git: false}; }
+}
+
+function localRepositoryKey(config, root, git = true) {
+  const identityDirectory = git
+    ? fs.realpathSync(execFileSync('git', ['-C', root, 'rev-parse', '--absolute-git-dir'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000, maxBuffer: 65536}).trim())
+    : root;
+  const stat = fs.statSync(identityDirectory);
   const fingerprint = crypto.createHash('sha256').update(`${stat.dev}:${stat.ino}:${stat.birthtimeMs}`).digest('hex');
   return `local:${crypto.createHmac('sha256', config.token).update(`${root}\0${fingerprint}`).digest('hex')}`;
 }
 
 function workRepositoryIdentity(repositoryPath) {
   const config = readDeviceConfig();
-  let root;
-  try { root = gitRoot(repositoryPath); }
+  let folder;
+  try { folder = projectFolder(repositoryPath); }
   catch { return {config}; }
-  try { return {config, repositoryUrl: gitOrigin(root)}; }
+  if (!folder.git) return {config, repositoryKey: localRepositoryKey(config, folder.root, false)};
+  try { return {config, repositoryUrl: gitOrigin(folder.root)}; }
   catch (error) {
     if (!/no origin remote/i.test(error instanceof Error ? error.message : '')) throw error;
-    return {config, repositoryKey: localRepositoryKey(config, root)};
+    return {config, repositoryKey: localRepositoryKey(config, folder.root)};
   }
 }
 
 function resolveLinkedProject(repositoryPath) {
   const config = readDeviceConfig();
-  const root = gitRoot(repositoryPath);
+  const {root, git} = projectFolder(repositoryPath);
   const matches = config.clones.filter((clone) => {
     if (!clone || !Number.isSafeInteger(Number(clone.workspaceId)) || Number(clone.workspaceId) < 1 || typeof clone.path !== 'string') return false;
     try { return fs.realpathSync(clone.path) === root; } catch { return false; }
   });
   const projects = [...new Set(matches.map((clone) => Number(clone.workspaceId)))];
   if (projects.length > 1) throw new Error('This repository is linked to more than one Neo-Nexus project. Resolve the duplicate link in Neo-Nexus.');
+  if (!git) return {...config, repositoryKey: localRepositoryKey(config, root, false), ...(projects.length === 1 ? {workspaceId: projects[0]} : {})};
   try { return {...config, repositoryUrl: gitOrigin(root)}; }
   catch (error) {
-    if (projects.length === 1) return {...config, workspaceId: projects[0]};
-    throw error;
+    if (!/no origin remote/i.test(error instanceof Error ? error.message : '')) throw error;
+    return {...config, repositoryKey: localRepositoryKey(config, root), ...(projects.length === 1 ? {workspaceId: projects[0]} : {})};
   }
 }
 
@@ -311,15 +325,19 @@ function failure(error) {
 
 async function context(argumentsValue = {}) {
   const config = resolveLinkedProject(argumentsValue.repository_path);
-  const selector = config.workspaceId ? {workspaceId: config.workspaceId} : {repositoryUrl: config.repositoryUrl};
+  const selector = config.repositoryUrl ? {repositoryUrl: config.repositoryUrl} : {repositoryKey: config.repositoryKey};
   let data;
   try { data = await callNeoNexus(config, 'codex-context', selector); }
   catch (error) {
-    if (!config.repositoryUrl || !isUnlinkedWorkError(error)) throw error;
-    const options = await callNeoNexus(config, 'codex-project-options', {repositoryUrl: config.repositoryUrl, pluginVersion: SERVER_INFO.version});
+    if (!isUnlinkedWorkError(error)) throw error;
+    const identity = config.repositoryUrl ? {repositoryUrl: config.repositoryUrl} : {repositoryKey: config.repositoryKey};
+    const options = await callNeoNexus(config, 'codex-project-options', {...identity, pluginVersion: SERVER_INFO.version});
     const exact = Array.isArray(options.projects) ? options.projects.filter((project) => project?.repositoryMatches === true) : [];
-    if (exact.length !== 1) throw new Error('This repository is not connected to a Neo-Nexus project. Use neo_nexus_list_projects, then neo_nexus_connect_project with the exact project ID.');
-    await callNeoNexus(config, 'codex-project-connect', {projectId: String(exact[0].id), repositoryUrl: config.repositoryUrl, pluginVersion: SERVER_INFO.version});
+    const configured = config.workspaceId && Array.isArray(options.projects) ? options.projects.find((project) => String(project?.id) === String(config.workspaceId)) : null;
+    if (exact.length > 1 || (exact.length === 1 && configured && String(exact[0].id) !== String(configured.id))) throw new Error('This folder has conflicting Neo-Nexus project matches. Choose one exact project after reviewing its connection.');
+    const selected = exact.length === 1 ? exact[0] : configured;
+    if (!selected) throw new Error('This folder is not connected to a Neo-Nexus project. Use neo_nexus_list_projects, then neo_nexus_connect_project with the exact project ID.');
+    await callNeoNexus(config, 'codex-project-connect', {projectId: String(selected.id), ...identity, pluginVersion: SERVER_INFO.version});
     data = await callNeoNexus(config, 'codex-context', selector);
   }
   return {config, data};
@@ -327,7 +345,7 @@ async function context(argumentsValue = {}) {
 
 function isUnlinkedWorkError(error) {
   const message = error instanceof Error ? error.message : '';
-  return /not inside a readable Git repository|no origin remote and no local Neo-Nexus project binding|not connected to a Neo-Nexus project|not actively linked for this engineer and device/i.test(message);
+  return /not connected to a Neo-Nexus project|not actively linked for this engineer and device/i.test(message);
 }
 
 async function callTool(name, args) {
@@ -346,19 +364,19 @@ async function callTool(name, args) {
   }
   if (name === 'neo_nexus_list_projects') {
     const config = resolveLinkedProject(args?.repository_path);
-    if (!config.repositoryUrl) throw new Error('This repository needs a safe hosted Git origin before the plugin can create a new project connection.');
-    const data = await callNeoNexus(config, 'codex-project-options', {repositoryUrl: config.repositoryUrl, pluginVersion: SERVER_INFO.version});
+    const identity = config.repositoryUrl ? {repositoryUrl: config.repositoryUrl} : {repositoryKey: config.repositoryKey};
+    const data = await callNeoNexus(config, 'codex-project-options', {...identity, pluginVersion: SERVER_INFO.version});
     const projects = Array.isArray(data.projects) ? data.projects : [];
     const summary = projects.length
-      ? projects.map((project) => `${project.id}: ${project.title}${project.connected ? ' (connected)' : project.repositoryMatches ? ' (Git remote match)' : ''}`).join('\n')
+      ? projects.map((project) => `${project.id}: ${project.title}${project.connected ? ' (connected)' : project.repositoryMatches ? ' (exact folder match)' : ''}`).join('\n')
       : 'No approved Neo-Nexus projects are available for this engineer.';
     return result(summary, {ok: true, ...data});
   }
   if (name === 'neo_nexus_connect_project') {
     if (!args || !/^[1-9]\d*$/.test(String(args.project_id || ''))) throw new Error('An exact project_id from neo_nexus_list_projects is required.');
     const config = resolveLinkedProject(args.repository_path);
-    if (!config.repositoryUrl) throw new Error('This repository needs a safe hosted Git origin before the plugin can create a new project connection.');
-    const data = await callNeoNexus(config, 'codex-project-connect', {projectId: String(args.project_id), repositoryUrl: config.repositoryUrl, pluginVersion: SERVER_INFO.version});
+    const identity = config.repositoryUrl ? {repositoryUrl: config.repositoryUrl} : {repositoryKey: config.repositoryKey};
+    const data = await callNeoNexus(config, 'codex-project-connect', {projectId: String(args.project_id), ...identity, pluginVersion: SERVER_INFO.version});
     return result(`Connected this repository to ${data.project?.title || `Neo-Nexus project ${args.project_id}`}.`, {ok: true, ...data});
   }
   if (name === 'neo_nexus_tracking_health') {

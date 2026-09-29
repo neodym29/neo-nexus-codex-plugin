@@ -1,12 +1,12 @@
 {
   "name": "neo-nexus",
-  "version": "0.6.3",
-  "description": "Connect repositories to approved projects and publish privacy-safe Codex work updates to Neo-Nexus.",
+  "version": "0.6.4",
+  "description": "Connect project folders to approved projects and publish privacy-safe Codex work updates to Neo-Nexus.",
   "author": {
     "name": "Neodym",
-    "url": "https://employee-tracker-cloud.vercel.app"
+    "url": "https://nexus.neodym.ai"
   },
-  "homepage": "https://employee-tracker-cloud.vercel.app",
+  "homepage": "https://nexus.neodym.ai",
   "keywords": [
     "projects",
     "engineering",
@@ -17,14 +17,14 @@
   "interface": {
     "displayName": "Neo-Nexus",
     "shortDescription": "Connect approved Neo-Nexus projects to Codex.",
-    "longDescription": "For Neo-Nexus projects, gives engineers permission-checked identity, explicit repository-to-project connection, project context, client tasks and issues, and privacy-safe work reporting inside Codex. Unrelated Codex tasks are outside this plugin's workflow. Neo-Nexus never receives prompts, source files, diffs, secrets, terminal history, commands, or local paths.",
+    "longDescription": "For Neo-Nexus projects, gives engineers permission-checked identity, explicit folder-to-project connection without requiring Git commits or a hosted remote, project context, client tasks and issues, and privacy-safe work reporting inside Codex. Unrelated Codex tasks are outside this plugin's workflow. Neo-Nexus never receives prompts, source files, diffs, secrets, terminal history, commands, or local paths.",
     "developerName": "Neodym",
     "category": "Productivity",
     "capabilities": [
       "Read",
       "Write"
     ],
-    "websiteURL": "https://employee-tracker-cloud.vercel.app",
+    "websiteURL": "https://nexus.neodym.ai",
     "brandColor": "#7566FF",
     "defaultPrompt": [
       "Who am I connected as in Neo-Nexus?",

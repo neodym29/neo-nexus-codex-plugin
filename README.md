@@ -4,8 +4,8 @@ Private Neodym marketplace for the Neo-Nexus engineering plugin.
 
 The plugin lets an approved engineer use Codex to:
 
-- read the Neo-Nexus project connected to the current Git checkout;
-- list approved projects and explicitly connect the current repository to one of them;
+- read the Neo-Nexus project connected to the current project folder;
+- list approved projects and explicitly connect the current folder to one of them;
 - see project progress, tracking health, and open client tasks or issue flags;
 - move a client request between open, in progress, and resolved with explicit approval.
 - verify which approved engineer and device the plugin is using.
@@ -21,7 +21,7 @@ It reuses the device identity created by the Neo-Nexus setup. The skill applies 
 
 Requirements:
 
-- Codex and Git are installed;
+- Codex is installed (Git is optional);
 - Node.js 18 or newer is available;
 - this computer is connected from **Set up Neo-Nexus CLI**;
 - the GitHub account can read this private repository.
@@ -32,7 +32,7 @@ Add the marketplace once:
 codex plugin marketplace add neodym29/neo-nexus-codex-plugin
 ```
 
-Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. An exact configured Git-remote match connects automatically; otherwise ask the plugin to list projects and connect the repository to the exact project you choose. Repositories without a hosted remote can be turned into projects directly from Neo-Nexus. Until that happens, their work stays under **Other work** with a privacy-safe device-scoped repository identity; Neo-Nexus moves those matching updates into the project automatically when it is created. No local path is uploaded.
+Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. An exact hosted-remote or approved local-device folder match connects automatically; otherwise ask the plugin to list projects and connect the folder to the exact project you choose. A folder without Git or a hosted remote can be connected explicitly. Until it is linked, its work stays under **Other work** with a privacy-safe device-scoped identity; Neo-Nexus moves matching updates into the project when the connection is made. No local path is uploaded. A summary recorded from a projectless chat without a folder identity cannot be attributed automatically from its wording alone.
 
 Useful prompts:
 
@@ -58,4 +58,4 @@ Restart Codex and start a new chat after installing an update.
 
 ## Access model
 
-The server independently verifies the current device, company, approved engineer account, active project membership, and exact repository remote. Creating a plugin project connection requires an explicit tool approval unless the project already has one unique exact remote match. Connections and request-status changes are audited to that engineer and device. Installing the plugin alone never grants project access.
+The server independently verifies the current device, company, approved engineer account, active project membership, and exact hosted remote or private local-folder identity. Creating a plugin project connection requires an explicit tool approval unless the folder already has one unique exact match. Connections and request-status changes are audited to that engineer and device. Installing the plugin alone never grants project access. Work milestones are recorded from Codex's verified work, including uncommitted changes; the plugin does not upload or independently inspect source files.
