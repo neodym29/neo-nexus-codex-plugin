@@ -46,7 +46,7 @@ Useful prompts:
 
 ## Update
 
-The plugin checks the Neodym marketplace on startup and once per day while Codex is open. It installs available updates in the background. Codex loads the refreshed plugin files after its next restart. If Codex has been closed, the check runs the next time it opens.
+The plugin checks the Neodym marketplace when its Codex connection starts and every 15 minutes while that connection is running. It installs a new release in the background only when the version changes; no manual upgrade command is needed for subsequent releases. A changed version must be published in the marketplace manifest. Codex loads updated skills and server files after its next restart; an existing chat cannot hot-reload them. If Codex has been closed, the check runs when the plugin connection starts again. The device must retain GitHub access to this private marketplace.
 
 To force an immediate refresh:
 
@@ -54,7 +54,7 @@ To force an immediate refresh:
 codex plugin marketplace upgrade neodym
 ```
 
-Restart Codex and start a new chat after installing an update.
+Restart Codex and start a new chat to use an update immediately after it has been downloaded.
 
 ## Access model
 

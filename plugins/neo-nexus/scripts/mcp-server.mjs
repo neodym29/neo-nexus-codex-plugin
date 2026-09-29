@@ -6,7 +6,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import {execFile, execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.6.4'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.6.5'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -124,8 +124,8 @@ function stateDirectory() {
   return path.join(os.homedir(), '.employee-trace');
 }
 
-// Codex loads plugin files at process startup. Refresh the trusted Neodym
-// marketplace in the background; a new Codex chat picks up the installed copy.
+// Codex loads plugin files at process startup. Keep the installed copy current
+// in the background; Codex picks up a new version after its next restart.
 let updateStarted = false;
 function startPluginAutoUpdate() {
   if (updateStarted) return;
@@ -133,11 +133,13 @@ function startPluginAutoUpdate() {
   const directory = stateDirectory();
   const stateFile = path.join(directory, 'neo-nexus-plugin-update.json');
   const lockFile = path.join(directory, 'neo-nexus-plugin-update.lock');
+  const interval = 15 * 60 * 1000;
   const check = () => {
+    try { fs.mkdirSync(directory, {recursive: true, mode: 0o700}); } catch { return; }
     let state = {};
     try { state = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch { /* First update. */ }
     const now = Date.now();
-    if (now - Number(state.lastSuccess || 0) < 24 * 60 * 60 * 1000 || now - Number(state.lastAttempt || 0) < 60 * 60 * 1000) return;
+    if (now - Number(state.lastAttempt || 0) < interval) return;
     try {
       const stat = fs.statSync(lockFile);
       if (now - stat.mtimeMs < 10 * 60 * 1000) return;
@@ -149,18 +151,39 @@ function startPluginAutoUpdate() {
     const save = (value) => {
       try { fs.writeFileSync(stateFile, JSON.stringify(value), {mode: 0o600}); } catch { /* The next session can retry. */ }
     };
-    const finish = (successful) => {
-      save({lastAttempt: now, lastSuccess: successful ? Date.now() : Number(state.lastSuccess || 0)});
+    const finish = (successful, installedVersion = state.installedVersion || '') => {
+      save({lastAttempt: now, lastSuccess: successful ? Date.now() : Number(state.lastSuccess || 0), installedVersion});
       try { fs.unlinkSync(lockFile); } catch { /* Already removed. */ }
     };
-    save({lastAttempt: now, lastSuccess: Number(state.lastSuccess || 0)});
+    save({lastAttempt: now, lastSuccess: Number(state.lastSuccess || 0), installedVersion: state.installedVersion || ''});
     execFile('codex', ['plugin', 'marketplace', 'upgrade', 'neodym'], {timeout: 120_000, maxBuffer: 64_000}, (upgradeError) => {
       if (upgradeError) { finish(false); return; }
-      execFile('codex', ['plugin', 'add', 'neo-nexus@neodym'], {timeout: 120_000, maxBuffer: 64_000}, (installError) => finish(!installError));
+      execFile('codex', ['plugin', 'list', '--marketplace', 'neodym', '--json'], {timeout: 30_000, maxBuffer: 256_000}, (listError, output) => {
+        if (listError) { finish(false); return; }
+        let installed;
+        let latest;
+        try {
+          const plugins = JSON.parse(output);
+          installed = plugins.installed.find((plugin) => plugin.pluginId === 'neo-nexus@neodym');
+          const source = installed?.source?.path;
+          if (!path.isAbsolute(source)) throw new Error('Marketplace source is not local.');
+          const manifest = path.join(source, '.codex-plugin', 'plugin.json');
+          latest = JSON.parse(fs.readFileSync(manifest, 'utf8')).version;
+          if (typeof latest !== 'string' || !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(latest)) throw new Error('Invalid marketplace plugin version.');
+        } catch { finish(false); return; }
+        if (installed.version === latest) { finish(true, latest); return; }
+        execFile('codex', ['plugin', 'add', 'neo-nexus@neodym', '--json'], {timeout: 120_000, maxBuffer: 64_000}, (installError, installOutput) => {
+          if (installError) { finish(false); return; }
+          try {
+            if (JSON.parse(installOutput).version !== latest) throw new Error('Installed version did not match the marketplace.');
+          } catch { finish(false); return; }
+          finish(true, latest);
+        });
+      });
     });
   };
   setTimeout(check, 2_000).unref?.();
-  setInterval(check, 60 * 60 * 1000).unref?.();
+  setInterval(check, interval).unref?.();
 }
 
 function readDeviceConfig() {
