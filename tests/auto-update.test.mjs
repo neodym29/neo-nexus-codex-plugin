@@ -42,7 +42,7 @@ if (args === 'plugin add neo-nexus@neodym --json') process.stdout.write(JSON.str
 }
 
 test('plugin installs a new marketplace release without blocking MCP startup', async (t) => {
-  await exerciseUpdater(t, '0.6.4', '0.6.5', [
+  await exerciseUpdater(t, '0.6.5', '0.6.6', [
     'plugin marketplace upgrade neodym',
     'plugin list --marketplace neodym --json',
     'plugin add neo-nexus@neodym --json',
@@ -50,7 +50,7 @@ test('plugin installs a new marketplace release without blocking MCP startup', a
 });
 
 test('plugin checks but does not reinstall an unchanged release', async (t) => {
-  await exerciseUpdater(t, '0.6.5', '0.6.5', [
+  await exerciseUpdater(t, '0.6.6', '0.6.6', [
     'plugin marketplace upgrade neodym',
     'plugin list --marketplace neodym --json',
   ]);
