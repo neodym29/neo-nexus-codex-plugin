@@ -1,6 +1,6 @@
 # Neo-Nexus for Codex
 
-Private Neodym marketplace for the Neo-Nexus engineering plugin.
+Public Neodym marketplace for the Neo-Nexus engineering plugin.
 
 The plugin lets an approved engineer use Codex to:
 
@@ -24,7 +24,7 @@ Requirements:
 - Codex is installed (Git is optional);
 - Node.js 18 or newer is available;
 - this computer is connected from **Set up Neo-Nexus CLI**;
-- the GitHub account can read this private repository.
+- Git can reach the public GitHub repository.
 
 Add the marketplace once:
 
@@ -46,7 +46,7 @@ Useful prompts:
 
 ## Update
 
-The plugin checks the Neodym marketplace when its Codex connection starts and every 15 minutes while that connection is running. It installs a new release in the background only when the version changes; no manual upgrade command is needed for subsequent releases. A changed version must be published in the marketplace manifest. Codex loads updated skills and server files after its next restart; an existing chat cannot hot-reload them. If Codex has been closed, the check runs when the plugin connection starts again. The device must retain GitHub access to this private marketplace.
+The plugin checks the Neodym marketplace when its Codex connection starts and every 15 minutes while that connection is running. It installs a new release in the background only when the version changes; no manual upgrade command is needed for subsequent releases. A changed version must be published in the marketplace manifest. Codex loads updated skills and server files after its next restart; an existing chat cannot hot-reload them. If Codex has been closed, the check runs when the plugin connection starts again. The marketplace repository is public; project data remains protected by device and account permissions.
 
 To force an immediate refresh:
 
