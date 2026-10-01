@@ -1,11 +1,11 @@
 ---
 name: neo-nexus-engineer
-description: Use only when the user explicitly asks to use Neo-Nexus or the current repository is already known to be connected to an approved Neo-Nexus project. Editing the Neo-Nexus app alone does not activate this skill.
+description: Recognize approved Neo-Nexus project folders during coding work and report verified milestones, including uncommitted work. Use when the Neo-Nexus engineer plugin is connected or the user requests Neo-Nexus. Do not report unrelated or projectless work automatically.
 ---
 
 # Neo-Nexus engineer workflow
 
-Use Neo-Nexus as the project and client-request authority only when the user explicitly requests its integration or the current repository is already known to be connected to an approved Neo-Nexus project. Merely editing Neo-Nexus itself is not a reason to activate this workflow. Do not call Neo-Nexus tools, identify the engineer, or publish updates for unrelated repositories or ordinary projectless chats. **Other work** is available only when the user explicitly asks to report that work to Neo-Nexus.
+For coding tasks in an absolute project folder, use the installed engineer connection to check whether the folder has one exact approved Neo-Nexus project match. Do not require the user to mention Neo-Nexus in every coding request. This is a metadata-only project lookup, not permission to create projects, read chat history, or upload source. If the device is disconnected or the folder has no approved match, stop this workflow quietly and continue the user's coding task. Never auto-publish unlinked work under **Other work**; that requires an explicit request.
 
 ## Start with project context
 
@@ -19,6 +19,7 @@ Use Neo-Nexus as the project and client-request authority only when the user exp
 ## Publish Codex work updates
 
 - After a meaningful verified milestone for a linked Neo-Nexus project, call `neo_nexus_record_work` once with a concise plain-language summary and one of `in_progress`, `completed`, or `blocked`.
+- Before the final handoff of a coding task in a matched project, check that its meaningful verified outcome was recorded. A heartbeat or daily rollup is not a work milestone. Do not duplicate an already recorded outcome or invent work from elapsed time. If posting fails, tell the engineer the work was not confirmed as received; do not claim that tracking succeeded.
 - Pass `repository_path` when available. The plugin files a linked repository under its project and automatically files an unlinked or projectless chat under **Other work**.
 - Use `completed` only when the requested outcome was implemented and the relevant checks actually passed. Use `in_progress` for a material milestone with work remaining. Use `blocked` only for a concrete blocker that prevents further progress.
 - Include the result a client cares about and the verification performed. Put one concrete remaining action in `next_step` when useful.

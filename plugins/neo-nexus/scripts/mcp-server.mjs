@@ -6,7 +6,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import {execFile, execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.6.6'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.6.7'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -286,14 +286,28 @@ async function callNeoNexus(config, operation, body, timeoutMs = 20000) {
       cache: 'no-store',
       signal: controller.signal,
     });
-    if (!response.ok) throw new Error(response.status === 401 ? 'Neo-Nexus rejected the device identity. Reconnect this device.' : response.status === 403 ? 'This repository is not connected to a Neo-Nexus project for this engineer and device.' : response.status === 409 ? 'Neo-Nexus could not connect this repository to that project. The configured Git remote may belong to a different project.' : `Neo-Nexus could not complete the request (${response.status}).`);
+    if (!response.ok) {
+      const error = new Error(response.status === 401 ? 'Neo-Nexus rejected the device identity. Reconnect this device.' : response.status === 403 ? 'This repository is not connected to a Neo-Nexus project for this engineer and device.' : response.status === 409 ? 'Neo-Nexus could not connect this repository to that project. The configured Git remote may belong to a different project.' : `Neo-Nexus could not complete the request (${response.status}).`);
+      error.retryable = response.status === 429 || response.status >= 500;
+      throw error;
+    }
     const text = await response.text();
     if (text.length > 131072) throw new Error('Neo-Nexus returned more project data than the plugin accepts.');
     return text ? JSON.parse(text) : {};
   } catch (error) {
-    if (error?.name === 'AbortError') throw new Error('Neo-Nexus did not respond in time.');
+    if (error?.name === 'AbortError') { const timeout = new Error('Neo-Nexus did not respond in time.'); timeout.retryable = true; throw timeout; }
+    if (error instanceof TypeError) error.retryable = true;
     throw error;
   } finally { clearTimeout(timer); }
+}
+
+async function postWorkMilestone(config, operation, body) {
+  // A retry must use the same key: a lost response is not a new work outcome.
+  const payload = {...body, idempotencyKey: crypto.randomUUID()};
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try { return await callNeoNexus(config, operation, payload, 240_000); }
+    catch (error) { if (!error?.retryable || attempt === 1) throw error; }
+  }
 }
 
 let heartbeatStarted = false;
@@ -415,13 +429,12 @@ async function callTool(name, args) {
       if (!isUnlinkedWorkError(error)) throw error;
       const identity = workRepositoryIdentity(args.repository_path);
       const {config} = identity;
-      const data = await callNeoNexus(config, 'codex-other-work-update', {
+      const data = await postWorkMilestone(config, 'codex-other-work-update', {
         status: String(args.status),
         summary: String(args.summary),
         ...(typeof args.next_step === 'string' && args.next_step.trim() ? {nextStep: args.next_step.trim()} : {}),
         ...('repositoryUrl' in identity ? {repositoryUrl: identity.repositoryUrl} : {}),
         ...('repositoryKey' in identity ? {repositoryKey: identity.repositoryKey} : {}),
-        idempotencyKey: crypto.randomUUID(),
         pluginVersion: SERVER_INFO.version,
       });
       return result(`Neo-Nexus recorded this ${String(args.status).replace('_', ' ')} update under Other work.`, {ok: true, ...data});
@@ -429,12 +442,11 @@ async function callTool(name, args) {
     const {config, data: projectData} = linked;
     const workspaceId = Number(projectData.project?.id);
     if (!Number.isSafeInteger(workspaceId) || workspaceId < 1) throw new Error('Neo-Nexus did not return a valid project identity.');
-    const data = await callNeoNexus(config, 'codex-work-update', {
+    const data = await postWorkMilestone(config, 'codex-work-update', {
       workspaceId,
       status: String(args.status),
       summary: String(args.summary),
       ...(typeof args.next_step === 'string' && args.next_step.trim() ? {nextStep: args.next_step.trim()} : {}),
-      idempotencyKey: crypto.randomUUID(),
       pluginVersion: SERVER_INFO.version,
     });
     const progress = data.progressRefresh?.updated ? ` Project progress is now ${data.progressRefresh.percent}%.` : '';
