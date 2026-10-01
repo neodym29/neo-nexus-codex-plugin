@@ -32,7 +32,9 @@ Add the marketplace once:
 codex plugin marketplace add neodym29/neo-nexus-codex-plugin
 ```
 
-Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. An exact hosted-remote or approved local-device folder match connects automatically; otherwise ask the plugin to list projects and connect the folder to the exact project you choose. A folder without Git or a hosted remote can be connected explicitly. Until it is linked, its work stays under **Other work** with a privacy-safe device-scoped identity; Neo-Nexus moves matching updates into the project when the connection is made. No local path is uploaded. A summary recorded from a projectless chat without a folder identity cannot be attributed automatically from its wording alone.
+Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. An exact hosted-remote or approved local-device folder match connects automatically; otherwise ask the plugin to list projects and connect the folder to the exact project you choose. A folder without Git or a hosted remote can be connected explicitly. Project milestones require an explicit absolute folder and are refused until it is linked, rather than silently posted under **Other work**. Explicitly requested Other work requires `allow_other_work: true`; Neo-Nexus moves earlier matching updates into the project when the connection is made. No local path is uploaded. A summary recorded without a folder identity cannot be attributed automatically from its wording alone.
+
+Automatic percentages are labeled estimates, not acceptance or delivery confirmation. An already-complete project can have its baseline confirmed with **Set progress** in its workspace by its owner, creator or platform admin. Automatic milestone assessments never replace that confirmed value.
 
 Useful prompts:
 
