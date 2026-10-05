@@ -1,6 +1,6 @@
 {
   "name": "neo-nexus",
-  "version": "0.6.8",
+  "version": "0.6.9",
   "description": "Connect project folders to approved projects and publish privacy-safe Codex work updates to Neo-Nexus.",
   "author": {
     "name": "Neodym",
@@ -17,7 +17,7 @@
   "interface": {
     "displayName": "Neo-Nexus",
     "shortDescription": "Connect approved Neo-Nexus projects to Codex.",
-    "longDescription": "For Neo-Nexus projects, gives engineers permission-checked identity, explicit folder-to-project connection without requiring Git commits or a hosted remote, project context, client tasks and issues, and privacy-safe work reporting inside Codex. Unrelated Codex tasks are outside this plugin's workflow. Neo-Nexus never receives prompts, source files, diffs, secrets, terminal history, commands, or local paths.",
+    "longDescription": "Gives engineers permission-checked identity, explicit folder-to-project connection without requiring Git commits or a hosted remote, project context, client tasks and issues, and privacy-safe coding-work reporting inside Codex. Verified work in unadded project folders goes to Other work without creating projects. General conversation and projectless work are not reported automatically. Neo-Nexus never receives prompts, conversation history, source files, diffs, secrets, terminal history, commands, or local paths.",
     "developerName": "Neodym",
     "category": "Productivity",
     "capabilities": [

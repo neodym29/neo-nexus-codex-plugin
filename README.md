@@ -13,9 +13,9 @@ The plugin lets an approved engineer use Codex to:
 - refresh project progress conservatively from those verified milestones as they are posted;
 - keep the project's live-app link current from a provider-verified production deployment;
 - publish verified, plain-language usage steps that remain in the project's automatically refreshed guide;
-- file unregistered work under **Other work** only when the engineer explicitly asks to report it to Neo-Nexus.
+- file meaningful verified coding work from unadded project folders under **Other work**, without creating projects.
 
-It reuses the device identity created by the Neo-Nexus setup. During coding tasks, the skill checks for one exact approved project match and reports meaningful verified milestones without requiring Neo-Nexus to be mentioned each time. Unmatched and projectless work is not reported automatically. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, secrets, terminal history, commands, or local paths.
+It reuses the device identity created by the Neo-Nexus setup. During coding tasks, the skill checks for one exact approved project match and reports meaningful verified milestones without requiring Neo-Nexus to be mentioned each time. Unmatched coding-project work appears under **Other work** in the engineer's daily report; it does not create a project. General conversation and projectless work are not reported automatically. Employee summaries come from Codex plugin work updates, not Git commits or watched-file activity. It does not upload repository source, diffs, prompts, conversation history, secrets, terminal history, commands, or local paths.
 
 ## Install
 
@@ -32,7 +32,7 @@ Add the marketplace once:
 codex plugin marketplace add neodym29/neo-nexus-codex-plugin
 ```
 
-Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. An exact hosted-remote or approved local-device folder match connects automatically; otherwise ask the plugin to list projects and connect the folder to the exact project you choose. A folder without Git or a hosted remote can be connected explicitly. Project milestones require an explicit absolute folder and are refused until it is linked, rather than silently posted under **Other work**. Explicitly requested Other work requires `allow_other_work: true`; Neo-Nexus moves earlier matching updates into the project when the connection is made. No local path is uploaded. A summary recorded without a folder identity cannot be attributed automatically from its wording alone.
+Then open Codex, run `/plugins`, select **Neodym Engineering**, open **Neo-Nexus**, and choose **Install plugin**. Start a new chat after installation. An exact hosted-remote or approved local-device folder match connects automatically. A folder without Git or a hosted remote can be connected explicitly. Coding milestones require an explicit absolute folder: linked work goes to the exact approved project, and work from unadded project folders goes to **Other work**. Set `allow_other_work: false` to require project-only reporting. Projectless reporting still requires an explicit request and `allow_other_work: true`. Neo-Nexus moves earlier identity-matched updates into the project when the connection is made. No local path is uploaded. A summary recorded without a folder identity cannot be attributed automatically from its wording alone. Earlier chats are not scanned or backfilled automatically.
 
 Automatic percentages are labeled estimates, not acceptance or delivery confirmation. An already-complete project can have its baseline confirmed with **Set progress** in its workspace by its owner, creator or platform admin. Automatic milestone assessments never replace that confirmed value.
 

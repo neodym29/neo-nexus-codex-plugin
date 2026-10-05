@@ -6,7 +6,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import {execFile, execFileSync} from 'node:child_process';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.6.8'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.6.9'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -60,13 +60,13 @@ const TOOLS = [
   },
   {
     name: 'neo_nexus_record_work',
-    description: 'For a connected Neo-Nexus project folder, post one plain-language work milestone and refresh project progress even when local changes are uncommitted. Use for unrelated work only when the user explicitly asks to report it to Neo-Nexus under Other work. Never include prompts, source code, diffs, secrets, terminal history, commands, or local file paths.',
+    description: 'Post one verified coding-work milestone from its explicit project folder. Exact approved matches go to that project; unadded project work goes to Other work without creating a project. General conversation and projectless work are not reported automatically. Never include prompts, conversation history, source code, diffs, secrets, terminal history, commands, or local file paths.',
     inputSchema: {
       type: 'object',
       required: ['status', 'summary'],
       properties: {
         repository_path: {type: 'string', description: 'Explicit absolute folder where this work occurred. Required for project work; never omit it or use the plugin process working directory.'},
-        allow_other_work: {type: 'boolean', description: 'Set true only when the user explicitly asks to report unlinked work under Other work. Otherwise an unlinked folder is rejected without posting.'},
+        allow_other_work: {type: 'boolean', description: 'When omitted, work from an explicit absolute project folder goes to Other work if unlinked. Set false to require a linked project. Set true only for explicitly requested projectless reporting.'},
         status: {type: 'string', enum: ['in_progress', 'completed', 'blocked']},
         summary: {type: 'string', minLength: 8, maxLength: 600, description: 'A concise non-technical description of the work outcome.'},
         next_step: {type: 'string', maxLength: 500, description: 'The next concrete step, if one remains.'},
@@ -431,8 +431,9 @@ async function callTool(name, args) {
     try { linked = await context(args); }
     catch (error) {
       if (!isUnlinkedWorkError(error)) throw error;
-      if (args.allow_other_work !== true) throw new Error('Work was not posted: this folder is not connected to a Neo-Nexus project. Use neo_nexus_list_projects, then neo_nexus_connect_project with the exact project ID and the same repository_path. Retry this milestone after linking.');
+      if (args.allow_other_work === false) throw new Error('Work was not posted: this folder is not connected to a Neo-Nexus project and allow_other_work is false. Use neo_nexus_list_projects, then neo_nexus_connect_project with the exact project ID and the same repository_path. Retry this milestone after linking.');
       const identity = workRepositoryIdentity(args.repository_path);
+      if (args.allow_other_work !== true && !identity.repositoryUrl && !identity.repositoryKey) throw new Error('Work was not posted: the project folder could not be identified. Retry with the readable absolute folder where the coding work occurred.');
       const {config} = identity;
       const data = await postWorkMilestone(config, 'codex-other-work-update', {
         status: String(args.status),
