@@ -5,8 +5,9 @@ import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
 import {execFile, execFileSync} from 'node:child_process';
+import {assertSafeGitRemote} from './git-remote.mjs';
 
-const SERVER_INFO = {name: 'neo-nexus', version: '0.6.9'};
+const SERVER_INFO = {name: 'neo-nexus', version: '0.6.10'};
 const PROFILE_SCHEMA = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   type: 'object',
@@ -214,16 +215,9 @@ function gitRoot(repositoryPath) {
 
 function gitOrigin(root) {
   let remote;
-  try { remote = execFileSync('git', ['-C', root, 'remote', 'get-url', 'origin'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000, maxBuffer: 65536}).trim(); }
+  try { remote = execFileSync('git', ['-C', root, 'remote', 'get-url', 'origin'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000, maxBuffer: 65536}).replace(/\r?\n$/, ''); }
   catch { throw new Error('This repository has no origin remote and no local Neo-Nexus project binding. Link it from the Projects page first.'); }
-  if (!remote || remote.length > 2048 || /[\u0000-\u001f\u007f]/.test(remote) || /(?:password|passwd|token|secret|credential|api[_-]?key|private[_-]?key|gh[pousr]_|sk[-_])/i.test(remote)) throw new Error('This repository origin is not safe to send to Neo-Nexus.');
-  const scp = /^git@[a-z0-9.-]+:[^?#]+$/i.test(remote);
-  if (!scp) {
-    let parsed;
-    try { parsed = new URL(remote); } catch { throw new Error('This repository origin is not a supported hosted Git remote.'); }
-    if (!['https:', 'ssh:'].includes(parsed.protocol) || parsed.password || parsed.search || parsed.hash || (parsed.protocol === 'https:' && parsed.username) || (parsed.protocol === 'ssh:' && parsed.username !== 'git')) throw new Error('This repository origin contains credentials or is not a supported hosted Git remote.');
-  }
-  return remote;
+  return assertSafeGitRemote(remote);
 }
 
 function projectFolder(repositoryPath) {

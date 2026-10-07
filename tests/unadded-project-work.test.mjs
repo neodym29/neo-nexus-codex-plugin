@@ -74,7 +74,7 @@ for (const kind of ['plain folder', 'local Git', 'hosted Git']) {
     assert.equal(updates[0].summary, summary);
     assert.equal(updates[0].status, 'completed');
     assert.match(updates[0].idempotencyKey, /^[a-f0-9-]{36}$/);
-    assert.equal(updates[0].pluginVersion, '0.6.9');
+    assert.equal(updates[0].pluginVersion, '0.6.10');
     if (kind === 'hosted Git') assert.equal(updates[0].repositoryUrl, 'https://github.com/example/unadded-project.git');
     else assert.match(updates[0].repositoryKey, /^local:[a-f0-9]{64}$/);
     assert.doesNotMatch(JSON.stringify(calls), /unadded-project-.*\/|neo-nexus-other-work-.*\/|repository_path|conversation|sourceCode/);

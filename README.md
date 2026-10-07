@@ -48,6 +48,8 @@ Useful prompts:
 
 ## Update
 
+Version **0.6.10** fixes repository names such as `tokenwatch` being mistaken for credentials. Hosted Git origins are checked by URL structure, username/password fields and repository path rules. Credential-bearing URLs, queries/fragments, local/helper transports and actual secret-shaped values remain rejected before any project lookup or milestone request.
+
 The plugin checks the Neodym marketplace when its Codex connection starts and every 15 minutes while that connection is running. It installs a new release in the background only when the version changes; no manual upgrade command is needed for subsequent releases. A changed version must be published in the marketplace manifest. Codex loads updated skills and server files after its next restart; an existing chat cannot hot-reload them. If Codex has been closed, the check runs when the plugin connection starts again. The marketplace repository is public; project data remains protected by device and account permissions.
 
 To force an immediate refresh:
